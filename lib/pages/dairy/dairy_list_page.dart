@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../../services/db_service.dart';
+import '../../models/product.dart';
 
 class DairyListPage extends StatefulWidget {
   const DairyListPage({super.key});
@@ -10,7 +11,7 @@ class DairyListPage extends StatefulWidget {
 }
 
 class _DairyListPageState extends State<DairyListPage> with TickerProviderStateMixin {
-  List<Map<String, dynamic>> products = [];
+  List<Product> products = [];
   bool isLoading = true;
   String searchQuery = '';
   late AnimationController _fabAnimationController;
@@ -35,7 +36,7 @@ class _DairyListPageState extends State<DairyListPage> with TickerProviderStateM
   Future<void> fetchProducts() async {
     setState(() => isLoading = true);
     try {
-      final data = await DBService.dairyCollection.find().toList();
+      final data = await DBService.getDairyProducts();
       setState(() {
         products = data;
         isLoading = false;
@@ -50,11 +51,10 @@ class _DairyListPageState extends State<DairyListPage> with TickerProviderStateM
     }
   }
 
-  List<Map<String, dynamic>> get filteredProducts {
+  List<Product> get filteredProducts {
     if (searchQuery.isEmpty) return products;
     return products.where((product) =>
-        product['name'].toString().toLowerCase().contains(
-            searchQuery.toLowerCase())
+        product.name.toLowerCase().contains(searchQuery.toLowerCase())
     ).toList();
   }
 
@@ -74,10 +74,7 @@ class _DairyListPageState extends State<DairyListPage> with TickerProviderStateM
         return Container(
           margin: const EdgeInsets.all(16),
           padding: EdgeInsets.only(
-            bottom: MediaQuery
-                .of(context)
-                .viewInsets
-                .bottom + 20,
+            bottom: MediaQuery.of(context).viewInsets.bottom + 20,
             left: 20,
             right: 20,
             top: 20,
@@ -136,9 +133,7 @@ class _DairyListPageState extends State<DairyListPage> with TickerProviderStateM
                   label: "Product Name",
                   icon: Icons.local_drink,
                   validator: (value) =>
-                  value?.isEmpty ?? true
-                      ? 'Required'
-                      : null,
+                  value?.isEmpty ?? true ? 'Required' : null,
                 ),
 
                 Row(
@@ -150,9 +145,7 @@ class _DairyListPageState extends State<DairyListPage> with TickerProviderStateM
                         icon: Icons.shopping_cart,
                         keyboardType: TextInputType.number,
                         validator: (value) =>
-                        value?.isEmpty ?? true
-                            ? 'Required'
-                            : null,
+                        value?.isEmpty ?? true ? 'Required' : null,
                       ),
                     ),
                     const SizedBox(width: 12),
@@ -163,9 +156,7 @@ class _DairyListPageState extends State<DairyListPage> with TickerProviderStateM
                         icon: Icons.sell,
                         keyboardType: TextInputType.number,
                         validator: (value) =>
-                        value?.isEmpty ?? true
-                            ? 'Required'
-                            : null,
+                        value?.isEmpty ?? true ? 'Required' : null,
                       ),
                     ),
                   ],
@@ -180,9 +171,7 @@ class _DairyListPageState extends State<DairyListPage> with TickerProviderStateM
                         icon: Icons.inventory,
                         keyboardType: TextInputType.number,
                         validator: (value) =>
-                        value?.isEmpty ?? true
-                            ? 'Required'
-                            : null,
+                        value?.isEmpty ?? true ? 'Required' : null,
                       ),
                     ),
                     const SizedBox(width: 12),
@@ -193,9 +182,7 @@ class _DairyListPageState extends State<DairyListPage> with TickerProviderStateM
                         icon: Icons.keyboard_return,
                         keyboardType: TextInputType.number,
                         validator: (value) =>
-                        value?.isEmpty ?? true
-                            ? 'Required'
-                            : null,
+                        value?.isEmpty ?? true ? 'Required' : null,
                       ),
                     ),
                   ],
@@ -209,14 +196,16 @@ class _DairyListPageState extends State<DairyListPage> with TickerProviderStateM
                     onPressed: () async {
                       if (formKey.currentState!.validate()) {
                         try {
-                          await DBService.dairyCollection.insertOne({
-                            "name": nameController.text,
-                            "buyPrice": double.parse(buyPriceController.text),
-                            "sellPrice": double.parse(sellPriceController.text),
-                            "stock": int.parse(stockController.text),
-                            "returns": int.parse(returnsController.text),
-                            "date": DateTime.now().toIso8601String()
-                          });
+                          final product = Product(
+                            name: nameController.text,
+                            buyPrice: double.parse(buyPriceController.text),
+                            sellPrice: double.parse(sellPriceController.text),
+                            stock: int.parse(stockController.text),
+                            returns: int.parse(returnsController.text),
+                            date: DateTime.now(),
+                          );
+
+                          await DBService.addDairyProduct(product);
                           Navigator.pop(context);
                           fetchProducts();
                           ScaffoldMessenger.of(context).showSnackBar(
@@ -241,8 +230,7 @@ class _DairyListPageState extends State<DairyListPage> with TickerProviderStateM
                     ),
                     child: const Text(
                       "Save Product",
-                      style: TextStyle(
-                          fontSize: 16, fontWeight: FontWeight.w600),
+                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
                     ),
                   ),
                 ),
@@ -289,11 +277,8 @@ class _DairyListPageState extends State<DairyListPage> with TickerProviderStateM
     );
   }
 
-  Widget _buildProductCard(Map<String, dynamic> product, int index) {
-    final profit = (product["sellPrice"] - product["buyPrice"]) *
-        (product["stock"] - product["returns"]);
-    final profitColor = profit >= 0 ? const Color(0xFF4CAF50) : const Color(
-        0xFFF44336);
+  Widget _buildProductCard(Product product, int index) {
+    final profitColor = product.profit >= 0 ? const Color(0xFF4CAF50) : const Color(0xFFF44336);
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
@@ -330,7 +315,7 @@ class _DairyListPageState extends State<DairyListPage> with TickerProviderStateM
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    product["name"],
+                    product.name,
                     style: const TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
@@ -341,13 +326,13 @@ class _DairyListPageState extends State<DairyListPage> with TickerProviderStateM
                   Row(
                     children: [
                       _buildInfoChip(
-                        "Stock: ${product["stock"]}",
+                        "Stock: ${product.stock}",
                         Icons.inventory,
                         const Color(0xFF2196F3),
                       ),
                       const SizedBox(width: 8),
                       _buildInfoChip(
-                        "Returns: ${product["returns"]}",
+                        "Returns: ${product.returns}",
                         Icons.keyboard_return,
                         const Color(0xFFFF9800),
                       ),
@@ -357,7 +342,7 @@ class _DairyListPageState extends State<DairyListPage> with TickerProviderStateM
                   Row(
                     children: [
                       Text(
-                        "Buy: ₹${product["buyPrice"]}",
+                        "Buy: ₹${product.buyPrice}",
                         style: TextStyle(
                           fontSize: 12,
                           color: Colors.grey[600],
@@ -365,7 +350,7 @@ class _DairyListPageState extends State<DairyListPage> with TickerProviderStateM
                       ),
                       const SizedBox(width: 12),
                       Text(
-                        "Sell: ₹${product["sellPrice"]}",
+                        "Sell: ₹${product.sellPrice}",
                         style: TextStyle(
                           fontSize: 12,
                           color: Colors.grey[600],
@@ -380,14 +365,13 @@ class _DairyListPageState extends State<DairyListPage> with TickerProviderStateM
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
                 Container(
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 12, vertical: 6),
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                   decoration: BoxDecoration(
                     color: profitColor.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: Text(
-                    "₹${profit.toStringAsFixed(2)}",
+                    "₹${product.profit.toStringAsFixed(2)}",
                     style: TextStyle(
                       color: profitColor,
                       fontWeight: FontWeight.bold,
@@ -455,12 +439,11 @@ class _DairyListPageState extends State<DairyListPage> with TickerProviderStateM
       ),
       child: TextField(
         onChanged: (value) => setState(() => searchQuery = value),
-        decoration: InputDecoration(
+        decoration: const InputDecoration(
           hintText: "Search products...",
-          prefixIcon: const Icon(Icons.search, color: Color(0xFF00BFA5)),
+          prefixIcon: Icon(Icons.search, color: Color(0xFF00BFA5)),
           border: InputBorder.none,
-          contentPadding: const EdgeInsets.symmetric(
-              horizontal: 16, vertical: 16),
+          contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 16),
         ),
       ),
     );
@@ -518,9 +501,7 @@ class _DairyListPageState extends State<DairyListPage> with TickerProviderStateM
         ],
       ),
     ).animate()
-        .scale(begin: const Offset(0.8, 0.8),
-        duration: 600.ms,
-        curve: Curves.easeOutBack)
+        .scale(begin: const Offset(0.8, 0.8), duration: 600.ms, curve: Curves.easeOutBack)
         .fadeIn(duration: 600.ms);
   }
 
@@ -553,48 +534,47 @@ class _DairyListPageState extends State<DairyListPage> with TickerProviderStateM
           _buildSearchBar(),
           if (filteredList.isEmpty && searchQuery.isEmpty)
             Expanded(child: _buildEmptyState())
-          else
-            if (filteredList.isEmpty && searchQuery.isNotEmpty)
-              Expanded(
-                child: Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(
-                        Icons.search_off,
-                        size: 64,
-                        color: Colors.grey[400],
+          else if (filteredList.isEmpty && searchQuery.isNotEmpty)
+            Expanded(
+              child: Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      Icons.search_off,
+                      size: 64,
+                      color: Colors.grey[400],
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      "No products found",
+                      style: TextStyle(
+                        fontSize: 18,
+                        color: Colors.grey[600],
+                        fontWeight: FontWeight.w500,
                       ),
-                      const SizedBox(height: 16),
-                      Text(
-                        "No products found",
-                        style: TextStyle(
-                          fontSize: 18,
-                          color: Colors.grey[600],
-                          fontWeight: FontWeight.w500,
-                        ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      "Try searching with different keywords",
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: Colors.grey[500],
                       ),
-                      const SizedBox(height: 8),
-                      Text(
-                        "Try searching with different keywords",
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: Colors.grey[500],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              )
-            else
-              Expanded(
-                child: ListView.builder(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  itemCount: filteredList.length,
-                  itemBuilder: (context, index) =>
-                      _buildProductCard(filteredList[index], index),
+                    ),
+                  ],
                 ),
               ),
+            )
+          else
+            Expanded(
+              child: ListView.builder(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                itemCount: filteredList.length,
+                itemBuilder: (context, index) =>
+                    _buildProductCard(filteredList[index], index),
+              ),
+            ),
         ],
       ),
       floatingActionButton: ScaleTransition(

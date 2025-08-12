@@ -7,7 +7,16 @@ import 'pages/home_page.dart';
 // Entry point
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await DBService.connect();
+
+  // Try to connect but don't crash if it fails
+  try {
+    await DBService.connect();
+    print('✅ Database connected successfully');
+  } catch (e) {
+    print('⚠️ Database connection failed, running in offline mode: $e');
+    // App will continue to work with local data
+  }
+
   runApp(const DairyDeskApp());
 }
 
@@ -45,11 +54,7 @@ class DairyDeskApp extends StatelessWidget {
           shape: CircleBorder(),
         ),
       ),
-      initialRoute: '/',
-      routes: {
-        '/': (context) => const SplashPage(),
-        '/home': (context) => const HomePage(),
-      },
+      home: const SplashPage(), // Simplified routing
     );
   }
 }
@@ -96,7 +101,10 @@ class _SplashPageState extends State<SplashPage> with TickerProviderStateMixin {
 
     _timer = Timer(const Duration(seconds: 3), () {
       if (mounted) {
-        Navigator.pushReplacementNamed(context, '/home');
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const HomePage()),
+        );
       }
     });
   }
@@ -179,13 +187,12 @@ class _SplashPageState extends State<SplashPage> with TickerProviderStateMixin {
                       ),
                     ),
                     const SizedBox(height: 8),
-                    Text(
+                    const Text(
                       "Manage your dairy & farm business",
                       style: TextStyle(
                         fontSize: 16,
                         color: Colors.white,
                         letterSpacing: 0.5,
-                        // You can add opacity if needed
                       ),
                     ),
                   ],

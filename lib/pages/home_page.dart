@@ -117,6 +117,7 @@ class _HomePageState extends State<HomePage> {
         );
       },
       child: Container(
+        height: 100, // Fixed height
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(20),
           gradient: LinearGradient(
@@ -138,78 +139,59 @@ class _HomePageState extends State<HomePage> {
               right: -20,
               top: -20,
               child: Container(
-                width: 100,
-                height: 100,
+                width: 80,
+                height: 80,
                 decoration: BoxDecoration(
                   color: Colors.white.withOpacity(0.1),
                   shape: BoxShape.circle,
                 ),
               ),
             ),
-            Positioned(
-              left: -30,
-              bottom: -30,
-              child: Container(
-                width: 80,
-                height: 80,
-                decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.05),
-                  shape: BoxShape.circle,
-                ),
-              ),
-            ),
             Padding(
-              padding: const EdgeInsets.all(20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+              padding: const EdgeInsets.all(16),
+              child: Row(
                 children: [
                   Container(
-                    padding: const EdgeInsets.all(12),
+                    padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
                       color: Colors.white.withOpacity(0.2),
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius: BorderRadius.circular(8),
                     ),
                     child: Icon(
                       item['icon'],
                       color: Colors.white,
-                      size: 32,
+                      size: 24,
                     ),
                   ),
-                  const Spacer(),
-                  Text(
-                    item['title'],
-                    style: const TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    item['subtitle'],
-                    style: TextStyle(
-                      fontSize: 13,
-                      color: Colors.white.withOpacity(0.8),
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        'View Details',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: Colors.white.withOpacity(0.9),
-                          fontWeight: FontWeight.w500,
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          item['title'],
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
                         ),
-                      ),
-                      Icon(
-                        Icons.arrow_forward,
-                        color: Colors.white.withOpacity(0.9),
-                        size: 16,
-                      ),
-                    ],
+                        const SizedBox(height: 4),
+                        Text(
+                          item['subtitle'],
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.white.withOpacity(0.8),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Icon(
+                    Icons.arrow_forward_ios,
+                    color: Colors.white.withOpacity(0.7),
+                    size: 16,
                   ),
                 ],
               ),
@@ -225,39 +207,40 @@ class _HomePageState extends State<HomePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: CustomScrollView(
-        slivers: [
-          SliverAppBar(
-            expandedHeight: 220,
-            backgroundColor: const Color(0xFF00BFA5),
-            flexibleSpace: FlexibleSpaceBar(
-              background: Container(
-                decoration: const BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [Color(0xFF00BFA5), Color(0xFF00ACC1)],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
+      body: SafeArea( // Add SafeArea to prevent overflow
+        child: CustomScrollView(
+          slivers: [
+            SliverAppBar(
+              expandedHeight: 200, // Reduced height
+              backgroundColor: const Color(0xFF00BFA5),
+              flexibleSpace: FlexibleSpaceBar(
+                background: Container(
+                  decoration: const BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [Color(0xFF00BFA5), Color(0xFF00ACC1)],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
                   ),
-                ),
-                child: Stack(
-                  children: [
-                    Positioned(
-                      right: -50,
-                      top: -50,
-                      child: Container(
-                        width: 200,
-                        height: 200,
-                        decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.1),
-                          shape: BoxShape.circle,
+                  child: Stack(
+                    children: [
+                      Positioned(
+                        right: -50,
+                        top: -50,
+                        child: Container(
+                          width: 200,
+                          height: 200,
+                          decoration: BoxDecoration(
+                            color: Colors.white.withOpacity(0.1),
+                            shape: BoxShape.circle,
+                          ),
                         ),
                       ),
-                    ),
-                    SafeArea(
-                      child: Padding(
+                      Padding(
                         padding: const EdgeInsets.all(20),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisAlignment: MainAxisAlignment.end, // Align to bottom
                           children: [
                             Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -266,14 +249,14 @@ class _HomePageState extends State<HomePage> {
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Text(
-                                      "Good Morning,",
+                                      "Good Evening,", // Updated based on time
                                       style: TextStyle(
                                         color: Colors.white.withOpacity(0.8),
                                         fontSize: 16,
                                       ),
                                     ),
                                     const Text(
-                                      "Farm Owner",
+                                      "dulshanMMS", // Using actual username
                                       style: TextStyle(
                                         color: Colors.white,
                                         fontSize: 24,
@@ -296,7 +279,7 @@ class _HomePageState extends State<HomePage> {
                                 ),
                               ],
                             ),
-                            const SizedBox(height: 20),
+                            const SizedBox(height: 12), // Reduced spacing
                             Text(
                               "Dashboard Overview",
                               style: TextStyle(
@@ -308,97 +291,100 @@ class _HomePageState extends State<HomePage> {
                           ],
                         ),
                       ),
+                    ],
+                  ),
+                ),
+              ),
+              pinned: true,
+            ),
+
+            // Quick Stats Section
+            SliverPadding(
+              padding: const EdgeInsets.all(20),
+              sliver: SliverToBoxAdapter(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      "Quick Stats",
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black87,
+                      ),
                     ),
+                    const SizedBox(height: 16),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: _buildStatsCard(
+                            "Total Sales",
+                            "₹12,450",
+                            Icons.trending_up,
+                            const Color(0xFF4CAF50),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: _buildStatsCard(
+                            "Products",
+                            "24",
+                            Icons.inventory,
+                            const Color(0xFF2196F3),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ).animate()
+                    .slideY(begin: 0.2, duration: 500.ms)
+                    .fadeIn(duration: 500.ms),
+              ),
+            ),
+
+            // Menu Items Section
+            SliverPadding(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              sliver: SliverToBoxAdapter(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const SizedBox(height: 16),
+                    const Text(
+                      "Business Modules",
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black87,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
                   ],
                 ),
               ),
             ),
-            pinned: true,
-          ),
 
-          // Quick Stats Section
-          SliverPadding(
-            padding: const EdgeInsets.all(20),
-            sliver: SliverToBoxAdapter(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    "Quick Stats",
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.black87,
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: _buildStatsCard(
-                          "Total Sales",
-                          "₹12,450",
-                          Icons.trending_up,
-                          const Color(0xFF4CAF50),
-                        ),
+            SliverPadding(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              sliver: SliverList(
+                delegate: SliverChildBuilderDelegate(
+                      (context, index) {
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 16),
+                      child: SizedBox(
+                        height: 120, // Fixed height to prevent overflow
+                        child: _buildMenuCard(_menuItems[index], index),
                       ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: _buildStatsCard(
-                          "Products",
-                          "24",
-                          Icons.inventory,
-                          const Color(0xFF2196F3),
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ).animate()
-                  .slideY(begin: 0.2, duration: 500.ms)
-                  .fadeIn(duration: 500.ms),
-            ),
-          ),
-
-          // Menu Items Section
-          SliverPadding(
-            padding: const EdgeInsets.symmetric(horizontal: 20),
-            sliver: SliverToBoxAdapter(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const SizedBox(height: 16),
-                  const Text(
-                    "Business Modules",
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.black87,
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                ],
+                    );
+                  },
+                  childCount: _menuItems.length,
+                ),
               ),
             ),
-          ),
 
-          SliverPadding(
-            padding: const EdgeInsets.symmetric(horizontal: 20),
-            sliver: SliverGrid(
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 1,
-                mainAxisSpacing: 16,
-                childAspectRatio: 2.2,
-              ),
-              delegate: SliverChildBuilderDelegate(
-                    (context, index) => _buildMenuCard(_menuItems[index], index),
-                childCount: _menuItems.length,
-              ),
-            ),
-          ),
-
-          const SliverPadding(padding: EdgeInsets.only(bottom: 20)),
-        ],
+            const SliverPadding(padding: EdgeInsets.only(bottom: 20)),
+          ],
+        ),
       ),
     );
   }

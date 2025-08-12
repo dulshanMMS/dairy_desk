@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import '../../services/db_service.dart';
+import '../../models/farm_item.dart';
 
 class FarmListPage extends StatefulWidget {
   const FarmListPage({super.key});
@@ -10,14 +12,14 @@ class FarmListPage extends StatefulWidget {
 
 class _FarmListPageState extends State<FarmListPage> with TickerProviderStateMixin {
   late TabController _tabController;
-  final List<Map<String, dynamic>> _crops = [];
-  final List<Map<String, dynamic>> _livestock = [];
+  List<FarmItem> _farmItems = [];
+  bool isLoading = true;
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
-    _loadDemoData();
+    _loadFarmItems();
   }
 
   @override
@@ -26,65 +28,440 @@ class _FarmListPageState extends State<FarmListPage> with TickerProviderStateMix
     super.dispose();
   }
 
-  void _loadDemoData() {
-    // Demo data for crops
-    _crops.addAll([
-      {
-        'name': 'Rice',
-        'area': '5.5 acres',
-        'planted': '2024-06-15',
-        'expectedHarvest': '2024-10-20',
-        'status': 'Growing',
-        'investment': 25000,
-        'expectedRevenue': 45000,
-        'icon': Icons.grass,
-        'color': const Color(0xFF4CAF50),
-      },
-      {
-        'name': 'Wheat',
-        'area': '3.2 acres',
-        'planted': '2024-05-10',
-        'expectedHarvest': '2024-09-15',
-        'status': 'Ready',
-        'investment': 18000,
-        'expectedRevenue': 32000,
-        'icon': Icons.eco,
-        'color': const Color(0xFFFF9800),
-      },
-    ]);
-
-    // Demo data for livestock
-    _livestock.addAll([
-      {
-        'type': 'Cows',
-        'count': 12,
-        'breed': 'Holstein',
-        'age': '2-4 years',
-        'healthStatus': 'Good',
-        'monthlyYield': '360 liters/day',
-        'feedCost': 8000,
-        'revenue': 18000,
-        'icon': Icons.pets,
-        'color': const Color(0xFF2196F3),
-      },
-      {
-        'type': 'Goats',
-        'count': 25,
-        'breed': 'Boer',
-        'age': '1-3 years',
-        'healthStatus': 'Excellent',
-        'monthlyYield': '150 liters/day',
-        'feedCost': 3500,
-        'revenue': 8500,
-        'icon': Icons.grass,
-        'color': const Color(0xFF9C27B0),
-      },
-    ]);
+  Future<void> _loadFarmItems() async {
+    setState(() => isLoading = true);
+    try {
+      final items = await DBService.getFarmItems();
+      setState(() {
+        _farmItems = items;
+        isLoading = false;
+      });
+    } catch (e) {
+      setState(() => isLoading = false);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error loading farm items: $e')),
+        );
+      }
+    }
   }
 
-  Widget _buildCropCard(Map<String, dynamic> crop, int index) {
-    final profit = crop['expectedRevenue'] - crop['investment'];
-    final profitColor = profit >= 0 ? const Color(0xFF4CAF50) : const Color(0xFFF44336);
+  List<FarmItem> get _crops => _farmItems.where((item) => item.type == FarmItemType.crop).toList();
+  List<FarmItem> get _livestock => _farmItems.where((item) => item.type == FarmItemType.livestock).toList();
+
+  void _showAddItemForm(FarmItemType type) {
+    if (type == FarmItemType.crop) {
+      _showAddCropForm();
+    } else {
+      _showAddLivestockForm();
+    }
+  }
+
+  void _showAddCropForm() {
+    final nameController = TextEditingController();
+    final areaController = TextEditingController();
+    final investmentController = TextEditingController();
+    final expectedRevenueController = TextEditingController();
+    final formKey = GlobalKey<FormState>();
+    DateTime plantedDate = DateTime.now();
+    DateTime expectedHarvestDate = DateTime.now().add(const Duration(days: 120));
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            return Container(
+              margin: const EdgeInsets.all(16),
+              padding: EdgeInsets.only(
+                bottom: MediaQuery.of(context).viewInsets.bottom + 20,
+                left: 20,
+                right: 20,
+                top: 20,
+              ),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(20),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.1),
+                    blurRadius: 20,
+                    spreadRadius: 0,
+                  ),
+                ],
+              ),
+              child: Form(
+                key: formKey,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF4CAF50).withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: const Icon(
+                            Icons.eco,
+                            color: Color(0xFF4CAF50),
+                            size: 20,
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        const Text(
+                          "Add New Crop",
+                          style: TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.black87,
+                          ),
+                        ),
+                        const Spacer(),
+                        IconButton(
+                          onPressed: () => Navigator.pop(context),
+                          icon: const Icon(Icons.close),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 20),
+
+                    TextFormField(
+                      controller: nameController,
+                      decoration: const InputDecoration(
+                        labelText: "Crop Name",
+                        prefixIcon: Icon(Icons.eco, color: Color(0xFF4CAF50)),
+                        border: OutlineInputBorder(),
+                      ),
+                      validator: (value) => value?.isEmpty ?? true ? 'Required' : null,
+                    ),
+                    const SizedBox(height: 16),
+
+                    TextFormField(
+                      controller: areaController,
+                      decoration: const InputDecoration(
+                        labelText: "Area (acres)",
+                        prefixIcon: Icon(Icons.landscape, color: Color(0xFF4CAF50)),
+                        border: OutlineInputBorder(),
+                      ),
+                      validator: (value) => value?.isEmpty ?? true ? 'Required' : null,
+                    ),
+                    const SizedBox(height: 16),
+
+                    Row(
+                      children: [
+                        Expanded(
+                          child: TextFormField(
+                            controller: investmentController,
+                            keyboardType: TextInputType.number,
+                            decoration: const InputDecoration(
+                              labelText: "Investment (₹)",
+                              prefixIcon: Icon(Icons.currency_rupee, color: Color(0xFF4CAF50)),
+                              border: OutlineInputBorder(),
+                            ),
+                            validator: (value) => value?.isEmpty ?? true ? 'Required' : null,
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: TextFormField(
+                            controller: expectedRevenueController,
+                            keyboardType: TextInputType.number,
+                            decoration: const InputDecoration(
+                              labelText: "Expected Revenue (₹)",
+                              prefixIcon: Icon(Icons.trending_up, color: Color(0xFF4CAF50)),
+                              border: OutlineInputBorder(),
+                            ),
+                            validator: (value) => value?.isEmpty ?? true ? 'Required' : null,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 24),
+
+                    SizedBox(
+                      width: double.infinity,
+                      height: 50,
+                      child: ElevatedButton(
+                        onPressed: () async {
+                          if (formKey.currentState!.validate()) {
+                            try {
+                              final crop = FarmItemFactory.createCrop(
+                                name: nameController.text,
+                                area: areaController.text,
+                                plantedDate: plantedDate,
+                                expectedHarvestDate: expectedHarvestDate,
+                                investment: double.parse(investmentController.text),
+                                expectedRevenue: double.parse(expectedRevenueController.text),
+                              );
+
+                              await DBService.addFarmItem(crop);
+                              Navigator.pop(context);
+                              _loadFarmItems();
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text('Crop added successfully!'),
+                                  backgroundColor: Color(0xFF4CAF50),
+                                ),
+                              );
+                            } catch (e) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(content: Text('Error: $e')),
+                              );
+                            }
+                          }
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF4CAF50),
+                          foregroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        child: const Text(
+                          "Save Crop",
+                          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  void _showAddLivestockForm() {
+    final nameController = TextEditingController();
+    final breedController = TextEditingController();
+    final ageController = TextEditingController();
+    final countController = TextEditingController();
+    final yieldController = TextEditingController();
+    final feedCostController = TextEditingController();
+    final revenueController = TextEditingController();
+    final formKey = GlobalKey<FormState>();
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) {
+        return Container(
+          margin: const EdgeInsets.all(16),
+          padding: EdgeInsets.only(
+            bottom: MediaQuery.of(context).viewInsets.bottom + 20,
+            left: 20,
+            right: 20,
+            top: 20,
+          ),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(20),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.1),
+                blurRadius: 20,
+                spreadRadius: 0,
+              ),
+            ],
+          ),
+          child: Form(
+            key: formKey,
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF2196F3).withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: const Icon(
+                          Icons.pets,
+                          color: Color(0xFF2196F3),
+                          size: 20,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      const Text(
+                        "Add New Livestock",
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.black87,
+                        ),
+                      ),
+                      const Spacer(),
+                      IconButton(
+                        onPressed: () => Navigator.pop(context),
+                        icon: const Icon(Icons.close),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 20),
+
+                  TextFormField(
+                    controller: nameController,
+                    decoration: const InputDecoration(
+                      labelText: "Animal Type",
+                      prefixIcon: Icon(Icons.pets, color: Color(0xFF2196F3)),
+                      border: OutlineInputBorder(),
+                    ),
+                    validator: (value) => value?.isEmpty ?? true ? 'Required' : null,
+                  ),
+                  const SizedBox(height: 16),
+
+                  Row(
+                    children: [
+                      Expanded(
+                        child: TextFormField(
+                          controller: breedController,
+                          decoration: const InputDecoration(
+                            labelText: "Breed",
+                            prefixIcon: Icon(Icons.category, color: Color(0xFF2196F3)),
+                            border: OutlineInputBorder(),
+                          ),
+                          validator: (value) => value?.isEmpty ?? true ? 'Required' : null,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: TextFormField(
+                          controller: countController,
+                          keyboardType: TextInputType.number,
+                          decoration: const InputDecoration(
+                            labelText: "Count",
+                            prefixIcon: Icon(Icons.numbers, color: Color(0xFF2196F3)),
+                            border: OutlineInputBorder(),
+                          ),
+                          validator: (value) => value?.isEmpty ?? true ? 'Required' : null,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+
+                  TextFormField(
+                    controller: ageController,
+                    decoration: const InputDecoration(
+                      labelText: "Age Range",
+                      prefixIcon: Icon(Icons.calendar_today, color: Color(0xFF2196F3)),
+                      border: OutlineInputBorder(),
+                    ),
+                    validator: (value) => value?.isEmpty ?? true ? 'Required' : null,
+                  ),
+                  const SizedBox(height: 16),
+
+                  TextFormField(
+                    controller: yieldController,
+                    decoration: const InputDecoration(
+                      labelText: "Monthly Yield",
+                      prefixIcon: Icon(Icons.water_drop, color: Color(0xFF2196F3)),
+                      border: OutlineInputBorder(),
+                    ),
+                    validator: (value) => value?.isEmpty ?? true ? 'Required' : null,
+                  ),
+                  const SizedBox(height: 16),
+
+                  Row(
+                    children: [
+                      Expanded(
+                        child: TextFormField(
+                          controller: feedCostController,
+                          keyboardType: TextInputType.number,
+                          decoration: const InputDecoration(
+                            labelText: "Feed Cost (₹)",
+                            prefixIcon: Icon(Icons.currency_rupee, color: Color(0xFF2196F3)),
+                            border: OutlineInputBorder(),
+                          ),
+                          validator: (value) => value?.isEmpty ?? true ? 'Required' : null,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: TextFormField(
+                          controller: revenueController,
+                          keyboardType: TextInputType.number,
+                          decoration: const InputDecoration(
+                            labelText: "Revenue (₹)",
+                            prefixIcon: Icon(Icons.trending_up, color: Color(0xFF2196F3)),
+                            border: OutlineInputBorder(),
+                          ),
+                          validator: (value) => value?.isEmpty ?? true ? 'Required' : null,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 24),
+
+                  SizedBox(
+                    width: double.infinity,
+                    height: 50,
+                    child: ElevatedButton(
+                      onPressed: () async {
+                        if (formKey.currentState!.validate()) {
+                          try {
+                            final livestock = FarmItemFactory.createLivestock(
+                              name: nameController.text,
+                              count: int.parse(countController.text),
+                              breed: breedController.text,
+                              age: ageController.text,
+                              monthlyYield: yieldController.text,
+                              feedCost: double.parse(feedCostController.text),
+                              revenue: double.parse(revenueController.text),
+                            );
+
+                            await DBService.addFarmItem(livestock);
+                            Navigator.pop(context);
+                            _loadFarmItems();
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('Livestock added successfully!'),
+                                backgroundColor: Color(0xFF2196F3),
+                              ),
+                            );
+                          } catch (e) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(content: Text('Error: $e')),
+                            );
+                          }
+                        }
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF2196F3),
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      child: const Text(
+                        "Save Livestock",
+                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildCropCard(FarmItem crop, int index) {
+    final profitColor = crop.profit >= 0 ? const Color(0xFF4CAF50) : const Color(0xFFF44336);
 
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
@@ -109,12 +486,12 @@ class _FarmListPageState extends State<FarmListPage> with TickerProviderStateMix
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: crop['color'].withOpacity(0.1),
+                    color: const Color(0xFF4CAF50).withOpacity(0.1),
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  child: Icon(
-                    crop['icon'],
-                    color: crop['color'],
+                  child: const Icon(
+                    Icons.eco,
+                    color: Color(0xFF4CAF50),
                     size: 24,
                   ),
                 ),
@@ -124,7 +501,7 @@ class _FarmListPageState extends State<FarmListPage> with TickerProviderStateMix
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        crop['name'],
+                        crop.name,
                         style: const TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
@@ -132,7 +509,7 @@ class _FarmListPageState extends State<FarmListPage> with TickerProviderStateMix
                         ),
                       ),
                       Text(
-                        "Area: ${crop['area']}",
+                        "Area: ${crop.area}",
                         style: TextStyle(
                           fontSize: 14,
                           color: Colors.grey[600],
@@ -144,13 +521,13 @@ class _FarmListPageState extends State<FarmListPage> with TickerProviderStateMix
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                   decoration: BoxDecoration(
-                    color: _getStatusColor(crop['status']).withOpacity(0.1),
+                    color: _getStatusColor(crop.cropStatus.toString().split('.').last).withOpacity(0.1),
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: Text(
-                    crop['status'],
+                    crop.cropStatus.toString().split('.').last.toUpperCase(),
                     style: TextStyle(
-                      color: _getStatusColor(crop['status']),
+                      color: _getStatusColor(crop.cropStatus.toString().split('.').last),
                       fontWeight: FontWeight.w600,
                       fontSize: 12,
                     ),
@@ -159,25 +536,6 @@ class _FarmListPageState extends State<FarmListPage> with TickerProviderStateMix
               ],
             ),
             const SizedBox(height: 16),
-            Row(
-              children: [
-                Expanded(
-                  child: _buildInfoItem(
-                    "Planted",
-                    _formatDate(crop['planted']),
-                    Icons.calendar_today,
-                  ),
-                ),
-                Expanded(
-                  child: _buildInfoItem(
-                    "Harvest",
-                    _formatDate(crop['expectedHarvest']),
-                    Icons.schedule,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
@@ -198,7 +556,7 @@ class _FarmListPageState extends State<FarmListPage> with TickerProviderStateMix
                         ),
                       ),
                       Text(
-                        "₹${crop['investment'].toString()}",
+                        "₹${crop.investment?.toStringAsFixed(0) ?? '0'}",
                         style: const TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w600,
@@ -218,7 +576,7 @@ class _FarmListPageState extends State<FarmListPage> with TickerProviderStateMix
                         ),
                       ),
                       Text(
-                        "₹${profit.toString()}",
+                        "₹${crop.profit.toStringAsFixed(0)}",
                         style: TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.bold,
@@ -238,9 +596,8 @@ class _FarmListPageState extends State<FarmListPage> with TickerProviderStateMix
         .fadeIn(duration: 400.ms);
   }
 
-  Widget _buildLivestockCard(Map<String, dynamic> livestock, int index) {
-    final profit = livestock['revenue'] - livestock['feedCost'];
-    final profitColor = profit >= 0 ? const Color(0xFF4CAF50) : const Color(0xFFF44336);
+  Widget _buildLivestockCard(FarmItem livestock, int index) {
+    final profitColor = livestock.profit >= 0 ? const Color(0xFF4CAF50) : const Color(0xFFF44336);
 
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
@@ -265,12 +622,12 @@ class _FarmListPageState extends State<FarmListPage> with TickerProviderStateMix
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: livestock['color'].withOpacity(0.1),
+                    color: const Color(0xFF2196F3).withOpacity(0.1),
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  child: Icon(
-                    livestock['icon'],
-                    color: livestock['color'],
+                  child: const Icon(
+                    Icons.pets,
+                    color: Color(0xFF2196F3),
                     size: 24,
                   ),
                 ),
@@ -282,7 +639,7 @@ class _FarmListPageState extends State<FarmListPage> with TickerProviderStateMix
                       Row(
                         children: [
                           Text(
-                            livestock['type'],
+                            livestock.name,
                             style: const TextStyle(
                               fontSize: 18,
                               fontWeight: FontWeight.bold,
@@ -293,22 +650,22 @@ class _FarmListPageState extends State<FarmListPage> with TickerProviderStateMix
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                             decoration: BoxDecoration(
-                              color: livestock['color'].withOpacity(0.1),
+                              color: const Color(0xFF2196F3).withOpacity(0.1),
                               borderRadius: BorderRadius.circular(12),
                             ),
                             child: Text(
-                              "${livestock['count']}",
-                              style: TextStyle(
+                              "${livestock.count}",
+                              style: const TextStyle(
                                 fontSize: 12,
                                 fontWeight: FontWeight.bold,
-                                color: livestock['color'],
+                                color: Color(0xFF2196F3),
                               ),
                             ),
                           ),
                         ],
                       ),
                       Text(
-                        "${livestock['breed']} • ${livestock['age']}",
+                        "${livestock.breed} • ${livestock.age}",
                         style: TextStyle(
                           fontSize: 14,
                           color: Colors.grey[600],
@@ -320,13 +677,13 @@ class _FarmListPageState extends State<FarmListPage> with TickerProviderStateMix
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                   decoration: BoxDecoration(
-                    color: _getHealthStatusColor(livestock['healthStatus']).withOpacity(0.1),
+                    color: _getHealthStatusColor(livestock.healthStatus.toString().split('.').last).withOpacity(0.1),
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: Text(
-                    livestock['healthStatus'],
+                    livestock.healthStatus.toString().split('.').last.toUpperCase(),
                     style: TextStyle(
-                      color: _getHealthStatusColor(livestock['healthStatus']),
+                      color: _getHealthStatusColor(livestock.healthStatus.toString().split('.').last),
                       fontWeight: FontWeight.w600,
                       fontSize: 12,
                     ),
@@ -354,7 +711,7 @@ class _FarmListPageState extends State<FarmListPage> with TickerProviderStateMix
                         ),
                       ),
                       Text(
-                        livestock['monthlyYield'],
+                        livestock.monthlyYield ?? '',
                         style: const TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w600,
@@ -378,7 +735,7 @@ class _FarmListPageState extends State<FarmListPage> with TickerProviderStateMix
                             ),
                           ),
                           Text(
-                            "₹${livestock['feedCost'].toString()}",
+                            "₹${livestock.feedCost?.toStringAsFixed(0) ?? '0'}",
                             style: const TextStyle(
                               fontSize: 14,
                               fontWeight: FontWeight.w600,
@@ -398,7 +755,7 @@ class _FarmListPageState extends State<FarmListPage> with TickerProviderStateMix
                             ),
                           ),
                           Text(
-                            "₹${profit.toString()}",
+                            "₹${livestock.profit.toStringAsFixed(0)}",
                             style: TextStyle(
                               fontSize: 14,
                               fontWeight: FontWeight.bold,
@@ -418,35 +775,6 @@ class _FarmListPageState extends State<FarmListPage> with TickerProviderStateMix
     ).animate(delay: Duration(milliseconds: 100 * index))
         .slideY(begin: 0.3, duration: 400.ms, curve: Curves.easeOutCubic)
         .fadeIn(duration: 400.ms);
-  }
-
-  Widget _buildInfoItem(String label, String value, IconData icon) {
-    return Row(
-      children: [
-        Icon(icon, size: 16, color: Colors.grey[500]),
-        const SizedBox(width: 6),
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 11,
-                color: Colors.grey[500],
-              ),
-            ),
-            Text(
-              value,
-              style: const TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w600,
-                color: Colors.black87,
-              ),
-            ),
-          ],
-        ),
-      ],
-    );
   }
 
   Color _getStatusColor(String status) {
@@ -477,13 +805,6 @@ class _FarmListPageState extends State<FarmListPage> with TickerProviderStateMix
     }
   }
 
-  String _formatDate(String dateStr) {
-    final date = DateTime.parse(dateStr);
-    final months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-    return "${date.day} ${months[date.month - 1]}";
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -493,6 +814,12 @@ class _FarmListPageState extends State<FarmListPage> with TickerProviderStateMix
         backgroundColor: const Color(0xFF4CAF50),
         foregroundColor: Colors.white,
         elevation: 0,
+        actions: [
+          IconButton(
+            onPressed: _loadFarmItems,
+            icon: const Icon(Icons.refresh),
+          ),
+        ],
         bottom: TabBar(
           controller: _tabController,
           labelColor: Colors.white,
@@ -510,7 +837,13 @@ class _FarmListPageState extends State<FarmListPage> with TickerProviderStateMix
           ],
         ),
       ),
-      body: TabBarView(
+      body: isLoading
+          ? const Center(
+        child: CircularProgressIndicator(
+          color: Color(0xFF4CAF50),
+        ),
+      )
+          : TabBarView(
         controller: _tabController,
         children: [
           // Crops Tab
@@ -544,13 +877,7 @@ class _FarmListPageState extends State<FarmListPage> with TickerProviderStateMix
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () {
-          // TODO: Implement add functionality
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Add functionality coming soon!'),
-              backgroundColor: Color(0xFF4CAF50),
-            ),
-          );
+          _showAddItemForm(_tabController.index == 0 ? FarmItemType.crop : FarmItemType.livestock);
         },
         backgroundColor: const Color(0xFF4CAF50),
         foregroundColor: Colors.white,
@@ -594,6 +921,22 @@ class _FarmListPageState extends State<FarmListPage> with TickerProviderStateMix
               color: Colors.grey[600],
             ),
             textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 32),
+          ElevatedButton.icon(
+            onPressed: () {
+              _showAddItemForm(_tabController.index == 0 ? FarmItemType.crop : FarmItemType.livestock);
+            },
+            icon: const Icon(Icons.add),
+            label: Text(_tabController.index == 0 ? "Add Crop" : "Add Livestock"),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: color,
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
           ),
         ],
       ),
