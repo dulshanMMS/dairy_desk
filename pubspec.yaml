@@ -1,0 +1,31 @@
+name: dairy_desk
+description: "A Flutter app to manage dairy and farm products with billing tracking."
+publish_to: 'none'
+
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.8.1
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  cupertino_icons: ^1.0.8
+  lottie: ^3.3.1
+  flutter_animate: ^4.5.2
+  provider: ^6.1.5
+  mongo_dart: ^0.10.3   # MongoDB driver for Dart
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+
+  flutter_lints: ^5.0.0
+
+flutter:
+  uses-material-design: true
+
+  assets:
+    - assets/images/
+    - assets/animations/
