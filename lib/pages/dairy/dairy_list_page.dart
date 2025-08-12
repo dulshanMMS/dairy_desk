@@ -1,6 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../../services/db_service.dart';
+import '../../models/product.dart';
+import '../../widgets/custom_card.dart';
+import '../../widgets/search_bar.dart';
+import '../../utils/formatters.dart';
+import 'dairy_form_page.dart';
+import 'dairy_detail_page.dart';
 
 class DairyListPage extends StatefulWidget {
   const DairyListPage({super.key});
@@ -10,9 +16,10 @@ class DairyListPage extends StatefulWidget {
 }
 
 class _DairyListPageState extends State<DairyListPage> with TickerProviderStateMixin {
-  List<Map<String, dynamic>> products = [];
+  List<Product> products = [];
+  List<Product> filteredProducts = [];
   bool isLoading = true;
-  String searchQuery = '';
+  final TextEditingController _searchController = TextEditingController();
   late AnimationController _fabAnimationController;
 
   @override
@@ -24,20 +31,359 @@ class _DairyListPageState extends State<DairyListPage> with TickerProviderStateM
       vsync: this,
     );
     _fabAnimationController.forward();
+    _searchController.addListener(_filterProducts);
   }
 
   @override
   void dispose() {
     _fabAnimationController.dispose();
+    _searchController.dispose();
     super.dispose();
   }
 
   Future<void> fetchProducts() async {
     setState(() => isLoading = true);
     try {
-      final data = await DBService.dairyCollection.find().toList();
+      final data = await DBService.getDairyProducts();
       setState(() {
         products = data;
+        filteredProducts = data;
+        isLoading = false;
+      });
+    } catch (e) {
+      setState(() => isLoading = false);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error loading products: $e')),
+        );
+      }
+    }
+  }
+
+  void _filterProducts() {
+    final query = _searchController.text.toLowerCase();
+    setState(() {
+      filteredProducts = products.where((product) =>
+          product.name.toLowerCase().contains(query)
+      ).toList();
+    });
+  }
+
+  void _navigateToForm([Product? product]) async {
+    final result = await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => DairyFormPage(product: product),
+      ),
+    );
+    
+    if (result == true) {
+      fetchProducts();
+    }
+  }
+
+  void _navigateToDetails(Product product) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => DairyDetailPage(product: product),
+      ),
+    );
+  }
+
+  Widget _buildProductCard(Product product, int index) {
+    final profit = product.profit;
+    final profitColor = profit >= 0 ? const Color(0xFF4CAF50) : const Color(0xFFF44336);
+
+    return CustomCard(
+      onTap: () => _navigateToDetails(product),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF00BFA5).withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Icon(
+                  Icons.local_drink,
+                  color: Color(0xFF00BFA5),
+                  size: 24,
+                ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      product.name,
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black87,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Row(
+                      children: [
+                        _buildInfoChip(
+                          "Stock: ${product.stock}",
+                          Icons.inventory,
+                          const Color(0xFF2196F3),
+                        ),
+                        const SizedBox(width: 8),
+                        _buildInfoChip(
+                          "Returns: ${product.returns}",
+                          Icons.keyboard_return,
+                          const Color(0xFFFF9800),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              IconButton(
+                onPressed: () => _navigateToForm(product),
+                icon: const Icon(Icons.edit, color: Colors.grey),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          
+          Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Buy: ${Formatters.formatCurrency(product.buyPrice)}',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Colors.grey[600],
+                      ),
+                    ),
+                    Text(
+                      'Sell: ${Formatters.formatCurrency(product.sellPrice)}',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Colors.grey[600],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: profitColor.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Text(
+                      Formatters.formatCurrency(profit),
+                      style: TextStyle(
+                        color: profitColor,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    "Profit",
+                    style: TextStyle(
+                      fontSize: 10,
+                      color: Colors.grey[500],
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ],
+      ),
+    ).animate(delay: Duration(milliseconds: 100 * index))
+        .slideX(begin: 0.3, duration: 400.ms, curve: Curves.easeOutCubic)
+        .fadeIn(duration: 400.ms);
+  }
+
+  Widget _buildInfoChip(String text, IconData icon, Color color) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 12, color: color),
+          const SizedBox(width: 4),
+          Text(
+            text,
+            style: TextStyle(
+              fontSize: 11,
+              color: color,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildEmptyState() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(32),
+            decoration: BoxDecoration(
+              color: const Color(0xFF00BFA5).withOpacity(0.1),
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(
+              Icons.local_drink_outlined,
+              size: 64,
+              color: Color(0xFF00BFA5),
+            ),
+          ),
+          const SizedBox(height: 24),
+          const Text(
+            "No products yet",
+            style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+              color: Colors.black87,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            "Add your first dairy product to get started",
+            style: TextStyle(
+              fontSize: 14,
+              color: Colors.grey[600],
+            ),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 32),
+          ElevatedButton.icon(
+            onPressed: () => _navigateToForm(),
+            icon: const Icon(Icons.add),
+            label: const Text("Add Product"),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF00BFA5),
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+          ),
+        ],
+      ),
+    ).animate()
+        .scale(begin: const Offset(0.8, 0.8),
+        duration: 600.ms,
+        curve: Curves.easeOutBack)
+        .fadeIn(duration: 600.ms);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.grey[50],
+      appBar: AppBar(
+        title: const Text("Dairy Products"),
+        backgroundColor: const Color(0xFF00BFA5),
+        foregroundColor: Colors.white,
+        elevation: 0,
+        actions: [
+          IconButton(
+            onPressed: fetchProducts,
+            icon: const Icon(Icons.refresh),
+          ),
+        ],
+      ),
+      body: isLoading
+          ? const Center(
+        child: CircularProgressIndicator(
+          color: Color(0xFF00BFA5),
+        ),
+      )
+          : Column(
+        children: [
+          CustomSearchBar(
+            hintText: "Search products...",
+            controller: _searchController,
+          ),
+          if (filteredProducts.isEmpty && _searchController.text.isEmpty)
+            Expanded(child: _buildEmptyState())
+          else if (filteredProducts.isEmpty && _searchController.text.isNotEmpty)
+            Expanded(
+              child: Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      Icons.search_off,
+                      size: 64,
+                      color: Colors.grey[400],
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      "No products found",
+                      style: TextStyle(
+                        fontSize: 18,
+                        color: Colors.grey[600],
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      "Try searching with different keywords",
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: Colors.grey[500],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            )
+          else
+            Expanded(
+              child: ListView.builder(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                itemCount: filteredProducts.length,
+                itemBuilder: (context, index) =>
+                    _buildProductCard(filteredProducts[index], index),
+              ),
+            ),
+        ],
+      ),
+      floatingActionButton: ScaleTransition(
+        scale: _fabAnimationController,
+        child: FloatingActionButton.extended(
+          onPressed: () => _navigateToForm(),
+          backgroundColor: const Color(0xFF00BFA5),
+          foregroundColor: Colors.white,
+          icon: const Icon(Icons.add),
+          label: const Text("Add Product"),
+        ),
+      ),
+    );
+  }
+}
         isLoading = false;
       });
     } catch (e) {
