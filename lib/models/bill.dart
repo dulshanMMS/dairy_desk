@@ -5,38 +5,56 @@ enum PaymentMethod { cash, card, upi, netBanking, cheque }
 class BillItem {
   final String productId;
   final String productName;
+  final double buyPrice;
+  final double sellPrice;
+  final double unitPrice; // Alias for sellPrice for UI compatibility
   final int quantity;
-  final double unitPrice;
+  final double totalAmount;
   final double discount;
 
   BillItem({
     required this.productId,
     required this.productName,
+    required this.buyPrice,
+    required this.sellPrice,
     required this.quantity,
-    required this.unitPrice,
-    this.discount = 0.0,
-  });
+    required this.totalAmount,
+    this.discount = 0,
+  }) : unitPrice = sellPrice;
 
-  double get totalPrice => (quantity * unitPrice) - discount;
+  // Calculate profit for this line item
+  double get profit => (sellPrice - buyPrice) * quantity;
 
-  factory BillItem.fromMap(Map<String, dynamic> map) {
-    return BillItem(
-      productId: map['productId'] ?? '',
-      productName: map['productName'] ?? '',
-      quantity: map['quantity'] ?? 0,
-      unitPrice: (map['unitPrice'] ?? 0).toDouble(),
-      discount: (map['discount'] ?? 0).toDouble(),
-    );
-  }
+  // Calculate profit margin percentage
+  double get profitMargin =>
+      buyPrice > 0 ? ((sellPrice - buyPrice) / buyPrice) * 100 : 0;
+
+  // Total price after discount (alias for totalAmount)
+  double get totalPrice => totalAmount - discount;
 
   Map<String, dynamic> toMap() {
     return {
       'productId': productId,
       'productName': productName,
-      'quantity': quantity,
+      'buyPrice': buyPrice,
+      'sellPrice': sellPrice,
       'unitPrice': unitPrice,
+      'quantity': quantity,
+      'totalAmount': totalAmount,
       'discount': discount,
     };
+  }
+
+  factory BillItem.fromMap(Map<String, dynamic> map) {
+    return BillItem(
+      productId: map['productId'] ?? '',
+      productName: map['productName'] ?? '',
+      buyPrice: (map['buyPrice'] ?? 0).toDouble(),
+      sellPrice: (map['sellPrice'] ?? 0).toDouble(),
+      quantity: map['quantity'] ?? 0,
+      totalAmount: (map['totalAmount'] ?? 0).toDouble(),
+      discount: (map['discount'] ?? 0).toDouble(),
+    );
   }
 }
 
@@ -47,96 +65,67 @@ class Bill {
   final String customerName;
   final String customerPhone;
   final String customerAddress;
+  final DateTime date;
+  final DateTime createdDate;
   final List<BillItem> items;
   final double subtotal;
   final double tax;
   final double discount;
   final double totalAmount;
-  final BillStatus status;
-  final PaymentMethod? paymentMethod;
-  final DateTime createdDate;
+  final double paidAmount;
+  final double pendingAmount;
+  final String status;
+  final String paymentMethod;
   final DateTime? dueDate;
   final DateTime? paidDate;
-  final Map<String, dynamic> metadata;
+  final String? notes;
+  final Map<String, dynamic>? metadata;
 
   Bill({
     this.id,
     required this.billNumber,
     required this.shopId,
     required this.customerName,
-    required this.customerPhone,
-    required this.customerAddress,
+    this.customerPhone = '',
+    this.customerAddress = '',
+    required this.date,
+    DateTime? createdDate,
     required this.items,
-    required this.subtotal,
-    required this.tax,
-    required this.discount,
+    this.subtotal = 0,
+    this.tax = 0,
+    this.discount = 0,
     required this.totalAmount,
-    required this.status,
-    this.paymentMethod,
-    required this.createdDate,
+    this.paidAmount = 0,
+    this.pendingAmount = 0,
+    this.status = 'pending',
+    this.paymentMethod = 'cash',
     this.dueDate,
     this.paidDate,
-    this.metadata = const {},
-  });
+    this.notes,
+    this.metadata,
+  }) : createdDate = createdDate ?? date;
 
-  factory Bill.fromMap(Map<String, dynamic> map) {
-    return Bill(
-      id: map['_id']?.toString(),
-      billNumber: map['billNumber'] ?? '',
-      shopId: map['shopId'] ?? '',
-      customerName: map['customerName'] ?? '',
-      customerPhone: map['customerPhone'] ?? '',
-      customerAddress: map['customerAddress'] ?? '',
-      items: (map['items'] as List<dynamic>?)
-          ?.map((item) => BillItem.fromMap(item))
-          .toList() ?? [],
-      subtotal: (map['subtotal'] ?? 0).toDouble(),
-      tax: (map['tax'] ?? 0).toDouble(),
-      discount: (map['discount'] ?? 0).toDouble(),
-      totalAmount: (map['totalAmount'] ?? 0).toDouble(),
-      status: BillStatus.values.firstWhere(
-            (e) => e.toString().split('.').last == map['status'],
-        orElse: () => BillStatus.draft,
-      ),
-      paymentMethod: map['paymentMethod'] != null
-          ? PaymentMethod.values.firstWhere(
-            (e) => e.toString().split('.').last == map['paymentMethod'],
-        orElse: () => PaymentMethod.cash,
-      )
-          : null,
-      createdDate: DateTime.parse(map['createdDate'] ?? DateTime.now().toIso8601String()),
-      dueDate: map['dueDate'] != null ? DateTime.parse(map['dueDate']) : null,
-      paidDate: map['paidDate'] != null ? DateTime.parse(map['paidDate']) : null,
-      metadata: Map<String, dynamic>.from(map['metadata'] ?? {}),
-    );
-  }
+  // Calculate total profit from all items in this bill
+  double get totalProfit => items.fold(0, (sum, item) => sum + item.profit);
 
-  Map<String, dynamic> toMap() {
-    return {
-      'billNumber': billNumber,
-      'shopId': shopId,
-      'customerName': customerName,
-      'customerPhone': customerPhone,
-      'customerAddress': customerAddress,
-      'items': items.map((item) => item.toMap()).toList(),
-      'subtotal': subtotal,
-      'tax': tax,
-      'discount': discount,
-      'totalAmount': totalAmount,
-      'status': status.toString().split('.').last,
-      'paymentMethod': paymentMethod?.toString().split('.').last,
-      'createdDate': createdDate.toIso8601String(),
-      'dueDate': dueDate?.toIso8601String(),
-      'paidDate': paidDate?.toIso8601String(),
-      'metadata': metadata,
-    };
-  }
+  // Calculate total cost (sum of buy prices * quantities)
+  double get totalCost =>
+      items.fold(0, (sum, item) => sum + (item.buyPrice * item.quantity));
 
-  bool get isPaid => status == BillStatus.paid;
-  bool get isOverdue => dueDate != null && DateTime.now().isAfter(dueDate!) && !isPaid;
+  // Calculate overall profit margin for this bill
+  double get profitMargin => totalCost > 0 ? (totalProfit / totalCost) * 100 : 0;
 
-  int get daysSinceCreated => DateTime.now().difference(createdDate).inDays;
-  int? get daysUntilDue => dueDate?.difference(DateTime.now()).inDays;
+  // Check if bill is fully paid
+  bool get isFullyPaid => paidAmount >= totalAmount;
+
+  // Get remaining amount to be paid
+  double get remainingAmount => totalAmount - paidAmount;
+
+  // Check if bill is overdue
+  bool get isOverdue =>
+      dueDate != null &&
+      DateTime.now().isAfter(dueDate!) &&
+      !isFullyPaid;
 
   Bill copyWith({
     String? id,
@@ -145,16 +134,20 @@ class Bill {
     String? customerName,
     String? customerPhone,
     String? customerAddress,
+    DateTime? date,
+    DateTime? createdDate,
     List<BillItem>? items,
     double? subtotal,
     double? tax,
     double? discount,
     double? totalAmount,
-    BillStatus? status,
-    PaymentMethod? paymentMethod,
-    DateTime? createdDate,
+    double? paidAmount,
+    double? pendingAmount,
+    String? status,
+    String? paymentMethod,
     DateTime? dueDate,
     DateTime? paidDate,
+    String? notes,
     Map<String, dynamic>? metadata,
   }) {
     return Bill(
@@ -164,30 +157,87 @@ class Bill {
       customerName: customerName ?? this.customerName,
       customerPhone: customerPhone ?? this.customerPhone,
       customerAddress: customerAddress ?? this.customerAddress,
+      date: date ?? this.date,
+      createdDate: createdDate ?? this.createdDate,
       items: items ?? this.items,
       subtotal: subtotal ?? this.subtotal,
       tax: tax ?? this.tax,
       discount: discount ?? this.discount,
       totalAmount: totalAmount ?? this.totalAmount,
+      paidAmount: paidAmount ?? this.paidAmount,
+      pendingAmount: pendingAmount ?? this.pendingAmount,
       status: status ?? this.status,
       paymentMethod: paymentMethod ?? this.paymentMethod,
-      createdDate: createdDate ?? this.createdDate,
       dueDate: dueDate ?? this.dueDate,
       paidDate: paidDate ?? this.paidDate,
+      notes: notes ?? this.notes,
       metadata: metadata ?? this.metadata,
     );
   }
 
-  @override
-  String toString() {
-    return 'Bill(id: $id, billNumber: $billNumber, customerName: $customerName, totalAmount: $totalAmount, status: $status)';
+  Map<String, dynamic> toMap() {
+    return {
+      if (id != null) '_id': id,
+      'billNumber': billNumber,
+      'shopId': shopId,
+      'customerName': customerName,
+      'customerPhone': customerPhone,
+      'customerAddress': customerAddress,
+      'date': date.toIso8601String(),
+      'createdDate': createdDate.toIso8601String(),
+      'items': items.map((item) => item.toMap()).toList(),
+      'subtotal': subtotal,
+      'tax': tax,
+      'discount': discount,
+      'totalAmount': totalAmount,
+      'paidAmount': paidAmount,
+      'pendingAmount': pendingAmount,
+      'status': status,
+      'paymentMethod': paymentMethod,
+      'dueDate': dueDate?.toIso8601String(),
+      'paidDate': paidDate?.toIso8601String(),
+      'notes': notes,
+      'metadata': metadata,
+    };
+  }
+
+  factory Bill.fromMap(Map<String, dynamic> map) {
+    return Bill(
+      id: map['_id']?.toString(),
+      billNumber: map['billNumber'] ?? '',
+      shopId: map['shopId'] ?? '',
+      customerName: map['customerName'] ?? '',
+      customerPhone: map['customerPhone'] ?? '',
+      customerAddress: map['customerAddress'] ?? '',
+      date: DateTime.parse(map['date']),
+      createdDate: map['createdDate'] != null ? DateTime.parse(map['createdDate']) : null,
+      items: (map['items'] as List<dynamic>?)
+              ?.map((item) => BillItem.fromMap(item))
+              .toList() ??
+          [],
+      subtotal: (map['subtotal'] ?? 0).toDouble(),
+      tax: (map['tax'] ?? 0).toDouble(),
+      discount: (map['discount'] ?? 0).toDouble(),
+      totalAmount: (map['totalAmount'] ?? 0).toDouble(),
+      paidAmount: (map['paidAmount'] ?? 0).toDouble(),
+      pendingAmount: (map['pendingAmount'] ?? 0).toDouble(),
+      status: map['status'] ?? 'pending',
+      paymentMethod: map['paymentMethod'] ?? 'cash',
+      dueDate: map['dueDate'] != null ? DateTime.parse(map['dueDate']) : null,
+      paidDate: map['paidDate'] != null ? DateTime.parse(map['paidDate']) : null,
+      notes: map['notes'],
+      metadata: map['metadata'],
+    );
   }
 }
 
 // Utility class for bill calculations
 class BillCalculator {
   static Bill calculateTotals(Bill bill) {
-    final subtotal = bill.items.fold<double>(0, (sum, item) => sum + item.totalPrice);
+    final subtotal = bill.items.fold<double>(
+      0,
+      (sum, item) => sum + item.totalPrice,
+    );
     final tax = subtotal * 0.18; // 18% GST
     final totalAmount = subtotal + tax - bill.discount;
 

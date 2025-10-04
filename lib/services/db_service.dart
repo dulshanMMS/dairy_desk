@@ -10,9 +10,13 @@ class DBService {
   static late DbCollection farmCollection;
   static late DbCollection shopCollection;
   static late DbCollection billCollection;
+  static late DbCollection userCollection; // Added for authentication
+
+  // Add public getter for database instance
+  static Db? get database => _db;
 
   // REVERTED: Back to original working connection string
-  static const _mongoUrl = "mongodb+srv://dairydesk0:BafyS9Ikw8Wd4rcm@cluster0.awdhjs1.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0";
+  static const _mongoUrl = "mongodb+srv://dairydesk01_db_user:EOF43ThxshO3LsLh@cluster0.rzutxlg.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0";
   static const _dbName = "dairydesk";
 
   // REVERTED: Back to original simple connection method
@@ -24,6 +28,35 @@ class DBService {
     farmCollection = _db!.collection('farm_products');
     shopCollection = _db!.collection('shops');
     billCollection = _db!.collection('bills');
+    userCollection = _db!.collection('users'); // Added for authentication
+
+    // Initialize authentication service
+    await _initializeAuth();
+  }
+
+  // Initialize authentication and create default user if needed
+  static Future<void> _initializeAuth() async {
+    try {
+      // Check if any users exist
+      final userCount = await userCollection.count();
+      if (userCount == 0) {
+        // Create default admin user
+        await userCollection.insertOne({
+          'email': 'admin@dairydesk.com',
+          'name': 'Admin User',
+          'phone': '',
+          'role': 'admin',
+          'isActive': true,
+          'createdDate': DateTime.now().toIso8601String(),
+          'lastLogin': DateTime.now().toIso8601String(),
+          'passwordHash': 'ef2d127de37b942baad06145e54b0c619a1f22327b2ebbcfbec78f5564afe39d', // admin123
+          'isDefaultUser': true,
+        });
+        print('✅ Default admin user created: admin@dairydesk.com / admin123');
+      }
+    } catch (e) {
+      print('⚠️ Failed to initialize auth: $e');
+    }
   }
 
   static Future<void> close() async {

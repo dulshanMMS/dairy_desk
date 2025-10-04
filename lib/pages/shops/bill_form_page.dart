@@ -6,6 +6,9 @@ import '../../models/product.dart';
 import '../../services/db_service.dart';
 import '../../config/constants.dart';
 
+// Export the enums for use in this file
+export '../../models/bill.dart' show BillStatus, PaymentMethod, BillCalculator;
+
 class BillFormPage extends StatefulWidget {
   final Shop shop;
   final Bill? bill; // null for create, non-null for edit
@@ -47,9 +50,80 @@ class _BillFormPageState extends State<BillFormPage> {
     _customerAddressController.text = bill.customerAddress;
     _discountController.text = bill.discount.toString();
     _billItems = List.from(bill.items);
-    _billStatus = bill.status;
-    _paymentMethod = bill.paymentMethod;
+
+    // Convert string status back to enum
+    _billStatus = _stringToBillStatus(bill.status);
+    _paymentMethod = _stringToPaymentMethod(bill.paymentMethod);
     _dueDate = bill.dueDate;
+  }
+
+  // Helper method to convert string to BillStatus enum
+  BillStatus _stringToBillStatus(String status) {
+    switch (status.toLowerCase()) {
+      case 'draft':
+        return BillStatus.draft;
+      case 'pending':
+        return BillStatus.pending;
+      case 'paid':
+        return BillStatus.paid;
+      case 'cancelled':
+        return BillStatus.cancelled;
+      case 'overdue':
+        return BillStatus.overdue;
+      default:
+        return BillStatus.pending;
+    }
+  }
+
+  // Helper method to convert string to PaymentMethod enum
+  PaymentMethod? _stringToPaymentMethod(String paymentMethod) {
+    switch (paymentMethod.toLowerCase()) {
+      case 'cash':
+        return PaymentMethod.cash;
+      case 'card':
+        return PaymentMethod.card;
+      case 'upi':
+        return PaymentMethod.upi;
+      case 'netbanking':
+        return PaymentMethod.netBanking;
+      case 'cheque':
+        return PaymentMethod.cheque;
+      default:
+        return PaymentMethod.cash;
+    }
+  }
+
+  // Helper method to convert enum to string
+  String _billStatusToString(BillStatus status) {
+    switch (status) {
+      case BillStatus.draft:
+        return 'draft';
+      case BillStatus.pending:
+        return 'pending';
+      case BillStatus.paid:
+        return 'paid';
+      case BillStatus.cancelled:
+        return 'cancelled';
+      case BillStatus.overdue:
+        return 'overdue';
+    }
+  }
+
+  // Helper method to convert enum to string
+  String _paymentMethodToString(PaymentMethod? method) {
+    if (method == null) return 'cash';
+    switch (method) {
+      case PaymentMethod.cash:
+        return 'cash';
+      case PaymentMethod.card:
+        return 'card';
+      case PaymentMethod.upi:
+        return 'upi';
+      case PaymentMethod.netBanking:
+        return 'netbanking';
+      case PaymentMethod.cheque:
+        return 'cheque';
+    }
   }
 
   Future<void> _loadProducts() async {
@@ -91,8 +165,10 @@ class _BillFormPageState extends State<BillFormPage> {
               _billItems[existingIndex] = BillItem(
                 productId: existingItem.productId,
                 productName: existingItem.productName,
+                buyPrice: existingItem.buyPrice,
+                sellPrice: existingItem.sellPrice,
                 quantity: existingItem.quantity + quantity,
-                unitPrice: existingItem.unitPrice,
+                totalAmount: (existingItem.quantity + quantity) * existingItem.sellPrice,
                 discount: existingItem.discount,
               );
             } else {
@@ -100,8 +176,10 @@ class _BillFormPageState extends State<BillFormPage> {
               _billItems.add(BillItem(
                 productId: product.id!,
                 productName: product.name,
+                buyPrice: product.buyPrice,
+                sellPrice: product.sellPrice,
                 quantity: quantity,
-                unitPrice: product.sellPrice,
+                totalAmount: quantity * product.sellPrice,
                 discount: 0,
               ));
             }
@@ -141,13 +219,14 @@ class _BillFormPageState extends State<BillFormPage> {
         customerName: _customerNameController.text.trim(),
         customerPhone: _customerPhoneController.text.trim(),
         customerAddress: _customerAddressController.text.trim(),
+        date: _isEditing ? widget.bill!.date : DateTime.now(), // Fix: add required date parameter
         items: _billItems,
         subtotal: _subtotal,
         tax: _tax,
         discount: _discount,
         totalAmount: _totalAmount,
-        status: _billStatus,
-        paymentMethod: _paymentMethod,
+        status: _billStatusToString(_billStatus), // Convert enum to string
+        paymentMethod: _paymentMethodToString(_paymentMethod), // Convert enum to string
         createdDate: _isEditing ? widget.bill!.createdDate : DateTime.now(),
         dueDate: _dueDate,
         paidDate: _billStatus == BillStatus.paid ? DateTime.now() : null,

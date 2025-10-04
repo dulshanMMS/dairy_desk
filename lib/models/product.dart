@@ -14,40 +14,31 @@ class Product {
     required this.buyPrice,
     required this.sellPrice,
     required this.stock,
-    required this.returns,
+    this.returns = 0,
     required this.date,
-    this.category = 'dairy',
+    required this.category,
   });
 
-  factory Product.fromMap(Map<String, dynamic> map) {
-    return Product(
-      id: map['_id']?.toString(),
-      name: map['name'] ?? '',
-      buyPrice: (map['buyPrice'] ?? 0).toDouble(),
-      sellPrice: (map['sellPrice'] ?? 0).toDouble(),
-      stock: map['stock'] ?? 0,
-      returns: map['returns'] ?? 0,
-      date: DateTime.parse(map['date'] ?? DateTime.now().toIso8601String()),
-      category: map['category'] ?? 'dairy',
-    );
-  }
+  // Calculate profit per unit
+  double get profitPerUnit => sellPrice - buyPrice;
 
-  Map<String, dynamic> toMap() {
-    return {
-      'name': name,
-      'buyPrice': buyPrice,
-      'sellPrice': sellPrice,
-      'stock': stock,
-      'returns': returns,
-      'date': date.toIso8601String(),
-      'category': category,
-    };
-  }
+  // Calculate total profit if all stock is sold
+  double get potentialProfit => profitPerUnit * stock;
 
-  double get profit => (sellPrice - buyPrice) * (stock - returns);
+  // Calculate total profit (alias for UI compatibility)
+  double get profit => potentialProfit;
+
+  // Calculate profit margin percentage
+  double get profitMargin => buyPrice > 0 ? (profitPerUnit / buyPrice) * 100 : 0;
+
+  // Calculate available stock (stock minus returns)
   int get availableStock => stock - returns;
+
+  // Calculate total investment
   double get totalInvestment => buyPrice * stock;
-  double get totalRevenue => sellPrice * availableStock;
+
+  // Calculate total revenue if all sold
+  double get totalRevenue => sellPrice * stock;
 
   Product copyWith({
     String? id,
@@ -71,8 +62,29 @@ class Product {
     );
   }
 
-  @override
-  String toString() {
-    return 'Product(id: $id, name: $name, buyPrice: $buyPrice, sellPrice: $sellPrice, stock: $stock, returns: $returns)';
+  Map<String, dynamic> toMap() {
+    return {
+      if (id != null) '_id': id,
+      'name': name,
+      'buyPrice': buyPrice,
+      'sellPrice': sellPrice,
+      'stock': stock,
+      'returns': returns,
+      'date': date.toIso8601String(),
+      'category': category,
+    };
+  }
+
+  factory Product.fromMap(Map<String, dynamic> map) {
+    return Product(
+      id: map['_id']?.toString(),
+      name: map['name'] ?? '',
+      buyPrice: (map['buyPrice'] ?? 0).toDouble(),
+      sellPrice: (map['sellPrice'] ?? 0).toDouble(),
+      stock: map['stock'] ?? 0,
+      returns: map['returns'] ?? 0,
+      date: DateTime.parse(map['date']),
+      category: map['category'] ?? '',
+    );
   }
 }

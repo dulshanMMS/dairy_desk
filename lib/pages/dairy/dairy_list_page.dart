@@ -203,6 +203,7 @@ class _DairyListPageState extends State<DairyListPage> with TickerProviderStateM
                             stock: int.parse(stockController.text),
                             returns: int.parse(returnsController.text),
                             date: DateTime.now(),
+                            category: 'dairy', // Add the required category parameter
                           );
 
                           await DBService.addDairyProduct(product);

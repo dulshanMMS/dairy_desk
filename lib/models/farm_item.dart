@@ -7,10 +7,10 @@ enum LivestockHealthStatus { excellent, good, fair, poor }
 class FarmItem {
   final String? id;
   final String name;
-  final FarmItemType type;
+  final String type;
   final Map<String, dynamic> details;
   final DateTime createdDate;
-  final DateTime? lastUpdated;
+  final DateTime lastUpdated;
 
   FarmItem({
     this.id,
@@ -18,79 +18,43 @@ class FarmItem {
     required this.type,
     required this.details,
     required this.createdDate,
-    this.lastUpdated,
+    required this.lastUpdated,
   });
 
-  factory FarmItem.fromMap(Map<String, dynamic> map) {
-    return FarmItem(
-      id: map['_id']?.toString(),
-      name: map['name'] ?? '',
-      type: FarmItemType.values.firstWhere(
-            (e) => e.toString().split('.').last == map['type'],
-        orElse: () => FarmItemType.crop,
-      ),
-      details: Map<String, dynamic>.from(map['details'] ?? {}),
-      createdDate: DateTime.parse(map['createdDate'] ?? DateTime.now().toIso8601String()),
-      lastUpdated: map['lastUpdated'] != null
-          ? DateTime.parse(map['lastUpdated'])
-          : null,
-    );
-  }
-
-  Map<String, dynamic> toMap() {
-    return {
-      'name': name,
-      'type': type.toString().split('.').last,
-      'details': details,
-      'createdDate': createdDate.toIso8601String(),
-      'lastUpdated': lastUpdated?.toIso8601String(),
-    };
-  }
-
   // Crop-specific getters
-  String? get area => type == FarmItemType.crop ? details['area'] : null;
-  DateTime? get plantedDate => type == FarmItemType.crop && details['plantedDate'] != null
+  String? get area => details['area'] as String?;
+  CropStatus? get cropStatus => details['cropStatus'] != null
+      ? CropStatus.values.firstWhere((e) => e.toString().split('.').last == details['cropStatus'])
+      : null;
+  DateTime? get plantedDate => details['plantedDate'] != null
       ? DateTime.parse(details['plantedDate'])
       : null;
-  DateTime? get expectedHarvestDate => type == FarmItemType.crop && details['expectedHarvestDate'] != null
+  DateTime? get expectedHarvestDate => details['expectedHarvestDate'] != null
       ? DateTime.parse(details['expectedHarvestDate'])
       : null;
-  CropStatus? get cropStatus => type == FarmItemType.crop
-      ? CropStatus.values.firstWhere(
-        (e) => e.toString().split('.').last == details['status'],
-    orElse: () => CropStatus.planted,
-  )
-      : null;
-  double? get investment => details['investment']?.toDouble();
-  double? get expectedRevenue => details['expectedRevenue']?.toDouble();
+  double get investment => (details['investment'] ?? 0).toDouble();
+  double get expectedRevenue => (details['expectedRevenue'] ?? 0).toDouble();
 
   // Livestock-specific getters
-  int? get count => type == FarmItemType.livestock ? details['count'] : null;
-  String? get breed => type == FarmItemType.livestock ? details['breed'] : null;
-  String? get age => type == FarmItemType.livestock ? details['age'] : null;
-  LivestockHealthStatus? get healthStatus => type == FarmItemType.livestock
-      ? LivestockHealthStatus.values.firstWhere(
-        (e) => e.toString().split('.').last == details['healthStatus'],
-    orElse: () => LivestockHealthStatus.good,
-  )
+  int get count => details['count'] ?? 0;
+  String? get breed => details['breed'] as String?;
+  String? get age => details['age'] as String?;
+  LivestockHealthStatus? get healthStatus => details['healthStatus'] != null
+      ? LivestockHealthStatus.values.firstWhere((e) => e.toString().split('.').last == details['healthStatus'])
       : null;
-  String? get monthlyYield => type == FarmItemType.livestock ? details['monthlyYield'] : null;
-  double? get feedCost => type == FarmItemType.livestock ? details['feedCost']?.toDouble() : null;
-  double? get revenue => type == FarmItemType.livestock ? details['revenue']?.toDouble() : null;
+  String? get monthlyYield => details['monthlyYield'] as String?;
+  double get feedCost => (details['feedCost'] ?? 0).toDouble();
+  double get revenue => (details['revenue'] ?? 0).toDouble();
 
-  // Common calculations
-  double get profit {
-    if (type == FarmItemType.crop) {
-      return (expectedRevenue ?? 0) - (investment ?? 0);
-    } else {
-      return (revenue ?? 0) - (feedCost ?? 0);
-    }
-  }
+  // Common profit calculations
+  double get profit => type == 'crop'
+      ? expectedRevenue - investment
+      : revenue - feedCost;
 
   FarmItem copyWith({
     String? id,
     String? name,
-    FarmItemType? type,
+    String? type,
     Map<String, dynamic>? details,
     DateTime? createdDate,
     DateTime? lastUpdated,
@@ -105,9 +69,26 @@ class FarmItem {
     );
   }
 
-  @override
-  String toString() {
-    return 'FarmItem(id: $id, name: $name, type: $type, details: $details)';
+  Map<String, dynamic> toMap() {
+    return {
+      if (id != null) '_id': id,
+      'name': name,
+      'type': type,
+      'details': details,
+      'createdDate': createdDate.toIso8601String(),
+      'lastUpdated': lastUpdated.toIso8601String(),
+    };
+  }
+
+  factory FarmItem.fromMap(Map<String, dynamic> map) {
+    return FarmItem(
+      id: map['_id']?.toString(),
+      name: map['name'] ?? '',
+      type: map['type'] ?? '',
+      details: Map<String, dynamic>.from(map['details'] ?? {}),
+      createdDate: DateTime.parse(map['createdDate']),
+      lastUpdated: DateTime.parse(map['lastUpdated']),
+    );
   }
 }
 
@@ -124,16 +105,17 @@ class FarmItemFactory {
   }) {
     return FarmItem(
       name: name,
-      type: FarmItemType.crop,
+      type: FarmItemType.crop.toString().split('.').last,
       details: {
         'area': area,
         'plantedDate': plantedDate.toIso8601String(),
         'expectedHarvestDate': expectedHarvestDate.toIso8601String(),
-        'status': status.toString().split('.').last,
+        'cropStatus': status.toString().split('.').last,
         'investment': investment,
         'expectedRevenue': expectedRevenue,
       },
       createdDate: DateTime.now(),
+      lastUpdated: DateTime.now(),
     );
   }
 
@@ -149,7 +131,7 @@ class FarmItemFactory {
   }) {
     return FarmItem(
       name: name,
-      type: FarmItemType.livestock,
+      type: FarmItemType.livestock.toString().split('.').last,
       details: {
         'count': count,
         'breed': breed,
@@ -160,6 +142,7 @@ class FarmItemFactory {
         'revenue': revenue,
       },
       createdDate: DateTime.now(),
+      lastUpdated: DateTime.now(),
     );
   }
 }

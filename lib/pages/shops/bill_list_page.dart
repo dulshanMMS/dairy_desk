@@ -5,6 +5,9 @@ import '../../models/shop.dart';
 import '../../models/bill.dart';
 import 'bill_form_page.dart';
 
+// Export the enums for use in this file
+export '../../models/bill.dart' show BillStatus, PaymentMethod, BillCalculator;
+
 class BillListPage extends StatefulWidget {
   final Shop shop;
 
@@ -337,8 +340,8 @@ class _BillListPageState extends State<BillListPage> with TickerProviderStateMix
         ),
       ),
     ).animate(delay: Duration(milliseconds: 100 * index))
-        .slideX(begin: 0.3, duration: 400.ms, curve: Curves.easeOutCubic)
-        .fadeIn(duration: 400.ms);
+          .slideX(begin: 0.3, duration: 400.ms, curve: Curves.easeOutCubic)
+          .fadeIn(duration: 400.ms);
   }
 
   Widget _buildSearchBar() {
@@ -469,18 +472,20 @@ class _BillListPageState extends State<BillListPage> with TickerProviderStateMix
     );
   }
 
-  Color _getStatusColor(BillStatus status) {
-    switch (status) {
-      case BillStatus.paid:
+  Color _getStatusColor(String status) {
+    switch (status.toLowerCase()) {
+      case 'paid':
         return const Color(0xFF4CAF50);
-      case BillStatus.pending:
+      case 'pending':
         return const Color(0xFFFF9800);
-      case BillStatus.overdue:
+      case 'overdue':
         return const Color(0xFFF44336);
-      case BillStatus.cancelled:
+      case 'cancelled':
         return Colors.grey;
-      case BillStatus.draft:
+      case 'draft':
         return const Color(0xFF2196F3);
+      default:
+        return Colors.grey;
     }
   }
 
@@ -492,9 +497,9 @@ class _BillListPageState extends State<BillListPage> with TickerProviderStateMix
   Widget build(BuildContext context) {
     final filteredList = filteredBills;
     final totalBills = bills.length;
-    final pendingBills = bills.where((b) => b.status == BillStatus.pending).length;
-    final paidBills = bills.where((b) => b.status == BillStatus.paid).length;
-    final totalRevenue = bills.where((b) => b.status == BillStatus.paid).fold<double>(0, (sum, bill) => sum + bill.totalAmount);
+    final pendingBills = bills.where((b) => b.status == 'pending').length;
+    final paidBills = bills.where((b) => b.status == 'paid').length;
+    final totalRevenue = bills.where((b) => b.status == 'paid').fold<double>(0, (sum, bill) => sum + bill.totalAmount);
 
     return Scaffold(
       backgroundColor: Colors.grey[50],

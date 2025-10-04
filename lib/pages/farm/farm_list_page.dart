@@ -3,6 +3,9 @@ import 'package:flutter_animate/flutter_animate.dart';
 import '../../services/db_service.dart';
 import '../../models/farm_item.dart';
 
+// Export the enums and factory for use in this file
+export '../../models/farm_item.dart' show FarmItemType, CropStatus, LivestockHealthStatus, FarmItemFactory;
+
 class FarmListPage extends StatefulWidget {
   const FarmListPage({super.key});
 
@@ -462,6 +465,8 @@ class _FarmListPageState extends State<FarmListPage> with TickerProviderStateMix
 
   Widget _buildCropCard(FarmItem crop, int index) {
     final profitColor = crop.profit >= 0 ? const Color(0xFF4CAF50) : const Color(0xFFF44336);
+    final statusLabel = crop.cropStatus?.toString().split('.').last.toUpperCase() ?? 'UNKNOWN';
+    final statusColor = _getStatusColor(statusLabel.toLowerCase());
 
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
@@ -489,11 +494,7 @@ class _FarmListPageState extends State<FarmListPage> with TickerProviderStateMix
                     color: const Color(0xFF4CAF50).withOpacity(0.1),
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  child: const Icon(
-                    Icons.eco,
-                    color: Color(0xFF4CAF50),
-                    size: 24,
-                  ),
+                  child: const Icon(Icons.eco, color: Color(0xFF4CAF50), size: 24),
                 ),
                 const SizedBox(width: 16),
                 Expanded(
@@ -502,18 +503,11 @@ class _FarmListPageState extends State<FarmListPage> with TickerProviderStateMix
                     children: [
                       Text(
                         crop.name,
-                        style: const TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.black87,
-                        ),
+                        style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black87),
                       ),
                       Text(
-                        "Area: ${crop.area}",
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: Colors.grey[600],
-                        ),
+                        "Area: ${crop.area ?? '-'}",
+                        style: TextStyle(fontSize: 14, color: Colors.grey[600]),
                       ),
                     ],
                   ),
@@ -521,16 +515,12 @@ class _FarmListPageState extends State<FarmListPage> with TickerProviderStateMix
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                   decoration: BoxDecoration(
-                    color: _getStatusColor(crop.cropStatus.toString().split('.').last).withOpacity(0.1),
+                    color: statusColor.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: Text(
-                    crop.cropStatus.toString().split('.').last.toUpperCase(),
-                    style: TextStyle(
-                      color: _getStatusColor(crop.cropStatus.toString().split('.').last),
-                      fontWeight: FontWeight.w600,
-                      fontSize: 12,
-                    ),
+                    statusLabel,
+                    style: TextStyle(color: statusColor, fontWeight: FontWeight.w600, fontSize: 12),
                   ),
                 ),
               ],
@@ -548,40 +538,20 @@ class _FarmListPageState extends State<FarmListPage> with TickerProviderStateMix
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      Text("Investment", style: TextStyle(fontSize: 12, color: Colors.grey[600])),
                       Text(
-                        "Investment",
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: Colors.grey[600],
-                        ),
-                      ),
-                      Text(
-                        "₹${crop.investment?.toStringAsFixed(0) ?? '0'}",
-                        style: const TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.black87,
-                        ),
+                        "₹${crop.investment.toStringAsFixed(0)}",
+                        style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Colors.black87),
                       ),
                     ],
                   ),
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
-                      Text(
-                        "Expected Profit",
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: Colors.grey[600],
-                        ),
-                      ),
+                      Text("Expected Profit", style: TextStyle(fontSize: 12, color: Colors.grey[600])),
                       Text(
                         "₹${crop.profit.toStringAsFixed(0)}",
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.bold,
-                          color: profitColor,
-                        ),
+                        style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: profitColor),
                       ),
                     ],
                   ),
@@ -591,13 +561,13 @@ class _FarmListPageState extends State<FarmListPage> with TickerProviderStateMix
           ],
         ),
       ),
-    ).animate(delay: Duration(milliseconds: 100 * index))
-        .slideY(begin: 0.3, duration: 400.ms, curve: Curves.easeOutCubic)
-        .fadeIn(duration: 400.ms);
+    );
   }
 
   Widget _buildLivestockCard(FarmItem livestock, int index) {
     final profitColor = livestock.profit >= 0 ? const Color(0xFF4CAF50) : const Color(0xFFF44336);
+    final healthLabel = livestock.healthStatus?.toString().split('.').last.toUpperCase() ?? 'UNKNOWN';
+    final healthColor = _getHealthStatusColor(healthLabel.toLowerCase());
 
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
@@ -625,11 +595,7 @@ class _FarmListPageState extends State<FarmListPage> with TickerProviderStateMix
                     color: const Color(0xFF2196F3).withOpacity(0.1),
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  child: const Icon(
-                    Icons.pets,
-                    color: Color(0xFF2196F3),
-                    size: 24,
-                  ),
+                  child: const Icon(Icons.pets, color: Color(0xFF2196F3), size: 24),
                 ),
                 const SizedBox(width: 16),
                 Expanded(
@@ -640,11 +606,7 @@ class _FarmListPageState extends State<FarmListPage> with TickerProviderStateMix
                         children: [
                           Text(
                             livestock.name,
-                            style: const TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.black87,
-                            ),
+                            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black87),
                           ),
                           const SizedBox(width: 8),
                           Container(
@@ -655,21 +617,14 @@ class _FarmListPageState extends State<FarmListPage> with TickerProviderStateMix
                             ),
                             child: Text(
                               "${livestock.count}",
-                              style: const TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.bold,
-                                color: Color(0xFF2196F3),
-                              ),
+                              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF2196F3)),
                             ),
                           ),
                         ],
                       ),
                       Text(
-                        "${livestock.breed} • ${livestock.age}",
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: Colors.grey[600],
-                        ),
+                        "${livestock.breed ?? '-'} • ${livestock.age ?? '-'}",
+                        style: TextStyle(fontSize: 14, color: Colors.grey[600]),
                       ),
                     ],
                   ),
@@ -677,16 +632,12 @@ class _FarmListPageState extends State<FarmListPage> with TickerProviderStateMix
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                   decoration: BoxDecoration(
-                    color: _getHealthStatusColor(livestock.healthStatus.toString().split('.').last).withOpacity(0.1),
+                    color: healthColor.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: Text(
-                    livestock.healthStatus.toString().split('.').last.toUpperCase(),
-                    style: TextStyle(
-                      color: _getHealthStatusColor(livestock.healthStatus.toString().split('.').last),
-                      fontWeight: FontWeight.w600,
-                      fontSize: 12,
-                    ),
+                    healthLabel,
+                    style: TextStyle(color: healthColor, fontWeight: FontWeight.w600, fontSize: 12),
                   ),
                 ),
               ],
@@ -703,21 +654,8 @@ class _FarmListPageState extends State<FarmListPage> with TickerProviderStateMix
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text(
-                        "Monthly Yield",
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: Colors.grey[600],
-                        ),
-                      ),
-                      Text(
-                        livestock.monthlyYield ?? '',
-                        style: const TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.black87,
-                        ),
-                      ),
+                      Text("Monthly Yield", style: TextStyle(fontSize: 12, color: Colors.grey[600])),
+                      Text(livestock.monthlyYield ?? '', style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Colors.black87)),
                     ],
                   ),
                   const SizedBox(height: 8),
@@ -727,40 +665,20 @@ class _FarmListPageState extends State<FarmListPage> with TickerProviderStateMix
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
+                          Text("Feed Cost", style: TextStyle(fontSize: 12, color: Colors.grey[600])),
                           Text(
-                            "Feed Cost",
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: Colors.grey[600],
-                            ),
-                          ),
-                          Text(
-                            "₹${livestock.feedCost?.toStringAsFixed(0) ?? '0'}",
-                            style: const TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w600,
-                              color: Colors.black87,
-                            ),
+                            "₹${livestock.feedCost.toStringAsFixed(0)}",
+                            style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Colors.black87),
                           ),
                         ],
                       ),
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.end,
                         children: [
-                          Text(
-                            "Monthly Profit",
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: Colors.grey[600],
-                            ),
-                          ),
+                          Text("Monthly Profit", style: TextStyle(fontSize: 12, color: Colors.grey[600])),
                           Text(
                             "₹${livestock.profit.toStringAsFixed(0)}",
-                            style: TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.bold,
-                              color: profitColor,
-                            ),
+                            style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: profitColor),
                           ),
                         ],
                       ),
@@ -772,9 +690,7 @@ class _FarmListPageState extends State<FarmListPage> with TickerProviderStateMix
           ],
         ),
       ),
-    ).animate(delay: Duration(milliseconds: 100 * index))
-        .slideY(begin: 0.3, duration: 400.ms, curve: Curves.easeOutCubic)
-        .fadeIn(duration: 400.ms);
+    );
   }
 
   Color _getStatusColor(String status) {

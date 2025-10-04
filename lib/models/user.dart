@@ -1,75 +1,75 @@
-class Shop {
+class User {
   final String? id;
-  final String name;
-  final String address;
-  final String phone;
   final String email;
-  final String ownerName;
+  final String name;
+  final String phone;
+  final String role;
   final bool isActive;
   final DateTime createdDate;
-  final Map<String, dynamic>? settings;
+  final DateTime lastLogin;
+  final Map<String, dynamic>? preferences;
 
-  Shop({
+  User({
     this.id,
+    required this.email,
     required this.name,
-    required this.address,
     this.phone = '',
-    this.email = '',
-    required this.ownerName,
+    this.role = 'owner',
     this.isActive = true,
     required this.createdDate,
-    this.settings,
+    required this.lastLogin,
+    this.preferences,
   });
 
-  Shop copyWith({
+  User copyWith({
     String? id,
-    String? name,
-    String? address,
-    String? phone,
     String? email,
-    String? ownerName,
+    String? name,
+    String? phone,
+    String? role,
     bool? isActive,
     DateTime? createdDate,
-    Map<String, dynamic>? settings,
+    DateTime? lastLogin,
+    Map<String, dynamic>? preferences,
   }) {
-    return Shop(
+    return User(
       id: id ?? this.id,
-      name: name ?? this.name,
-      address: address ?? this.address,
-      phone: phone ?? this.phone,
       email: email ?? this.email,
-      ownerName: ownerName ?? this.ownerName,
+      name: name ?? this.name,
+      phone: phone ?? this.phone,
+      role: role ?? this.role,
       isActive: isActive ?? this.isActive,
       createdDate: createdDate ?? this.createdDate,
-      settings: settings ?? this.settings,
+      lastLogin: lastLogin ?? this.lastLogin,
+      preferences: preferences ?? this.preferences,
     );
   }
 
   Map<String, dynamic> toMap() {
     return {
       if (id != null) '_id': id,
-      'name': name,
-      'address': address,
-      'phone': phone,
       'email': email,
-      'ownerName': ownerName,
+      'name': name,
+      'phone': phone,
+      'role': role,
       'isActive': isActive,
       'createdDate': createdDate.toIso8601String(),
-      'settings': settings,
+      'lastLogin': lastLogin.toIso8601String(),
+      'preferences': preferences,
     };
   }
 
-  factory Shop.fromMap(Map<String, dynamic> map) {
-    return Shop(
+  factory User.fromMap(Map<String, dynamic> map) {
+    return User(
       id: map['_id']?.toString(),
-      name: map['name'] ?? '',
-      address: map['address'] ?? '',
-      phone: map['phone'] ?? '',
       email: map['email'] ?? '',
-      ownerName: map['ownerName'] ?? '',
+      name: map['name'] ?? '',
+      phone: map['phone'] ?? '',
+      role: map['role'] ?? 'owner',
       isActive: map['isActive'] ?? true,
       createdDate: DateTime.parse(map['createdDate']),
-      settings: map['settings'],
+      lastLogin: DateTime.parse(map['lastLogin']),
+      preferences: map['preferences'],
     );
   }
 }
