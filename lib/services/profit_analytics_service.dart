@@ -1,5 +1,3 @@
-import '../models/product.dart';
-import '../models/bill.dart';
 import '../models/shop.dart';
 import 'db_service.dart';
 

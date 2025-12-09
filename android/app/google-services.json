@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "630117981916",
+    "project_id": "project0-8e876",
+    "storage_bucket": "project0-8e876.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:630117981916:android:6b1d875d9e2f6a59f5de19",
+        "android_client_info": {
+          "package_name": "com.example.dairy_desk"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBDCy0dRVwseqMMQuKjB6RLGvH4FIt-3W4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

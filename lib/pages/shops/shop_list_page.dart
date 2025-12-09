@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../../services/db_service.dart';
 import '../../models/shop.dart';
-import '../../models/bill.dart';
 import 'bill_list_page.dart';
 
 class ShopListPage extends StatefulWidget {

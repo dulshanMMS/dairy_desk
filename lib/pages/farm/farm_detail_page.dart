@@ -372,7 +372,7 @@ class _FarmDetailPageState extends State<FarmDetailPage> {
   @override
   Widget build(BuildContext context) {
     final profitColor = farmItem.profit >= 0 ? const Color(0xFF4CAF50) : const Color(0xFFF44336);
-    final isCrop = farmItem.type == FarmItemType.crop;
+    final isCrop = farmItem.typeEnum == FarmItemType.crop;
     final primaryColor = isCrop ? const Color(0xFF4CAF50) : const Color(0xFF2196F3);
 
     return Scaffold(

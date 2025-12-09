@@ -15,8 +15,8 @@ class DBService {
   // Add public getter for database instance
   static Db? get database => _db;
 
-  // REVERTED: Back to original working connection string
-  static const _mongoUrl = "mongodb+srv://dairydesk01_db_user:EOF43ThxshO3LsLh@cluster0.rzutxlg.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0";
+  // Updated MongoDB connection string
+  static const _mongoUrl = "mongodb+srv://dairydesk11_db_user:S2lzwE84G2dilAkc@cluster0.vnzjdm4.mongodb.net/?appName=Cluster0";
   static const _dbName = "dairydesk";
 
   // REVERTED: Back to original simple connection method

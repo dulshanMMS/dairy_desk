@@ -49,8 +49,8 @@ class _FarmListPageState extends State<FarmListPage> with TickerProviderStateMix
     }
   }
 
-  List<FarmItem> get _crops => _farmItems.where((item) => item.type == FarmItemType.crop).toList();
-  List<FarmItem> get _livestock => _farmItems.where((item) => item.type == FarmItemType.livestock).toList();
+  List<FarmItem> get _crops => _farmItems.where((item) => item.typeEnum == FarmItemType.crop).toList();
+  List<FarmItem> get _livestock => _farmItems.where((item) => item.typeEnum == FarmItemType.livestock).toList();
 
   void _showAddItemForm(FarmItemType type) {
     if (type == FarmItemType.crop) {

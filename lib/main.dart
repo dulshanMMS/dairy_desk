@@ -1,20 +1,38 @@
 import 'package:flutter/material.dart';
 import 'dart:async';
+import 'package:firebase_core/firebase_core.dart';
 
 import 'services/db_service.dart';
+import 'services/firebase_auth_service.dart';
 import 'pages/home_page.dart';
+import 'pages/auth/login_page.dart';
 
 // Entry point
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Try to connect but don't crash if it fails
+  // Initialize Firebase
+  try {
+    await Firebase.initializeApp();
+    print('✅ Firebase initialized successfully');
+  } catch (e) {
+    print('⚠️ Firebase initialization failed: $e');
+  }
+
+  // Try to connect to MongoDB
   try {
     await DBService.connect();
     print('✅ Database connected successfully');
   } catch (e) {
     print('⚠️ Database connection failed, running in offline mode: $e');
-    // App will continue to work with local data
+  }
+
+  // Initialize Firebase Auth Service
+  try {
+    await FirebaseAuthService.initialize();
+    print('✅ Firebase Auth initialized');
+  } catch (e) {
+    print('⚠️ Firebase Auth initialization failed: $e');
   }
 
   runApp(const DairyDeskApp());
@@ -54,7 +72,7 @@ class DairyDeskApp extends StatelessWidget {
           shape: CircleBorder(),
         ),
       ),
-      home: const SplashPage(), // Simplified routing
+      home: const SplashPage(),
     );
   }
 }
@@ -71,7 +89,6 @@ class _SplashPageState extends State<SplashPage> with TickerProviderStateMixin {
   late AnimationController _textController;
   late Animation<double> _logoAnimation;
   late Animation<double> _textAnimation;
-  late Timer _timer;
 
   @override
   void initState() {
@@ -98,15 +115,7 @@ class _SplashPageState extends State<SplashPage> with TickerProviderStateMixin {
     );
 
     _startAnimation();
-
-    _timer = Timer(const Duration(seconds: 3), () {
-      if (mounted) {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => const HomePage()),
-        );
-      }
-    });
+    _navigateToNextPage();
   }
 
   void _startAnimation() async {
@@ -116,11 +125,27 @@ class _SplashPageState extends State<SplashPage> with TickerProviderStateMixin {
     _textController.forward();
   }
 
+  void _navigateToNextPage() async {
+    await Future.delayed(const Duration(seconds: 3));
+
+    if (mounted) {
+      // Check if user is logged in
+      final isLoggedIn = FirebaseAuthService.isLoggedIn();
+
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (context) =>
+              isLoggedIn ? const HomePage() : const LoginPage(),
+        ),
+      );
+    }
+  }
+
   @override
   void dispose() {
     _logoController.dispose();
     _textController.dispose();
-    _timer.cancel();
     super.dispose();
   }
 
@@ -199,15 +224,8 @@ class _SplashPageState extends State<SplashPage> with TickerProviderStateMixin {
                 ),
               ),
               const SizedBox(height: 60),
-              SizedBox(
-                width: 40,
-                height: 40,
-                child: CircularProgressIndicator(
-                  strokeWidth: 2,
-                  valueColor: AlwaysStoppedAnimation<Color>(
-                    Colors.white.withOpacity(0.7),
-                  ),
-                ),
+              const CircularProgressIndicator(
+                valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
               ),
             ],
           ),

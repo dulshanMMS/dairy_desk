@@ -60,10 +60,10 @@ class _FarmFormPageState extends State<FarmFormPage> with TickerProviderStateMix
   void _populateFields() {
     final farmItem = widget.farmItem!;
     _nameController.text = farmItem.name;
-    _selectedType = farmItem.type;
-    _tabController.index = farmItem.type == FarmItemType.crop ? 0 : 1;
+    _selectedType = farmItem.typeEnum;
+    _tabController.index = farmItem.typeEnum == FarmItemType.crop ? 0 : 1;
 
-    if (farmItem.type == FarmItemType.crop) {
+    if (farmItem.typeEnum == FarmItemType.crop) {
       _areaController.text = farmItem.area ?? '';
       _investmentController.text = farmItem.investment?.toString() ?? '';
       _expectedRevenueController.text = farmItem.expectedRevenue?.toString() ?? '';
@@ -755,3 +755,4 @@ class _FarmFormPageState extends State<FarmFormPage> with TickerProviderStateMix
     );
   }
 }
+

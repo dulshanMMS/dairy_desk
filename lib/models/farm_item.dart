@@ -21,6 +21,9 @@ class FarmItem {
     required this.lastUpdated,
   });
 
+  // Convert string type to enum
+  FarmItemType get typeEnum => type == 'crop' ? FarmItemType.crop : FarmItemType.livestock;
+
   // Crop-specific getters
   String? get area => details['area'] as String?;
   CropStatus? get cropStatus => details['cropStatus'] != null
