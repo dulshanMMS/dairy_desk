@@ -192,21 +192,21 @@ class _AnalyticsPageState extends State<AnalyticsPage> with SingleTickerProvider
               children: [
                 _buildSummaryCard(
                   'Total Revenue',
-                  '₹${report.totalRevenue.toStringAsFixed(0)}',
+                  'LKR ${report.totalRevenue.toStringAsFixed(0)}',
                   '${report.totalSales} sales',
                   Icons.trending_up,
                   const Color(0xFF4CAF50),
                 ),
                 _buildSummaryCard(
                   'Total Profit',
-                  '₹${report.totalProfit.toStringAsFixed(0)}',
+                  'LKR ${report.totalProfit.toStringAsFixed(0)}',
                   '${report.profitMargin.toStringAsFixed(1)}% margin',
                   Icons.account_balance_wallet,
                   const Color(0xFF2196F3),
                 ),
                 _buildSummaryCard(
                   'Total Cost',
-                  '₹${report.totalCost.toStringAsFixed(0)}',
+                  'LKR ${report.totalCost.toStringAsFixed(0)}',
                   'Investment',
                   Icons.shopping_cart,
                   const Color(0xFFFF9800),
@@ -262,8 +262,7 @@ class _AnalyticsPageState extends State<AnalyticsPage> with SingleTickerProvider
             fontSize: 14,
           ),
         ),
-      ),
-    );
+      );
   }
 
   Widget _buildProfitChart(ProfitReport report) {
@@ -324,7 +323,7 @@ class _AnalyticsPageState extends State<AnalyticsPage> with SingleTickerProvider
                       reservedSize: 40,
                       getTitlesWidget: (value, meta) {
                         return Text(
-                          '₹${(value / 1000).toStringAsFixed(0)}k',
+                          'LKR ${(value / 1000).toStringAsFixed(0)}k',
                           style: const TextStyle(fontSize: 10),
                         );
                       },
@@ -492,7 +491,7 @@ class _AnalyticsPageState extends State<AnalyticsPage> with SingleTickerProvider
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
               Text(
-                '₹${product.profit.toStringAsFixed(0)}',
+                'LKR ${product.profit.toStringAsFixed(0)}',
                 style: const TextStyle(
                   fontWeight: FontWeight.bold,
                   fontSize: 16,
@@ -575,7 +574,7 @@ class _AnalyticsPageState extends State<AnalyticsPage> with SingleTickerProvider
                 ),
               ),
               Text(
-                '₹${shop.profit.toStringAsFixed(0)}',
+                'LKR ${shop.profit.toStringAsFixed(0)}',
                 style: const TextStyle(
                   fontWeight: FontWeight.bold,
                   fontSize: 16,
@@ -589,7 +588,7 @@ class _AnalyticsPageState extends State<AnalyticsPage> with SingleTickerProvider
             children: [
               _buildShopStat('Bills', '${shop.billCount}'),
               const SizedBox(width: 16),
-              _buildShopStat('Revenue', '₹${shop.revenue.toStringAsFixed(0)}'),
+              _buildShopStat('Revenue', 'LKR ${shop.revenue.toStringAsFixed(0)}'),
               const SizedBox(width: 16),
               _buildShopStat('Margin', '${shop.profitMargin.toStringAsFixed(1)}%'),
             ],
@@ -720,7 +719,7 @@ class _AnalyticsPageState extends State<AnalyticsPage> with SingleTickerProvider
               Expanded(
                 child: _buildProductStat(
                   'Buy Price',
-                  '₹${product.buyPrice.toStringAsFixed(2)}',
+                  'LKR ${product.buyPrice.toStringAsFixed(2)}',
                   Icons.shopping_bag,
                   const Color(0xFFFF9800),
                 ),
@@ -728,7 +727,7 @@ class _AnalyticsPageState extends State<AnalyticsPage> with SingleTickerProvider
               Expanded(
                 child: _buildProductStat(
                   'Sell Price',
-                  '₹${product.sellPrice.toStringAsFixed(2)}',
+                  'LKR ${product.sellPrice.toStringAsFixed(2)}',
                   Icons.sell,
                   const Color(0xFF4CAF50),
                 ),
@@ -741,7 +740,7 @@ class _AnalyticsPageState extends State<AnalyticsPage> with SingleTickerProvider
               Expanded(
                 child: _buildProductStat(
                   'Profit/Unit',
-                  '₹${product.profitPerUnit.toStringAsFixed(2)}',
+                  'LKR ${product.profitPerUnit.toStringAsFixed(2)}',
                   Icons.trending_up,
                   const Color(0xFF2196F3),
                 ),
@@ -777,7 +776,7 @@ class _AnalyticsPageState extends State<AnalyticsPage> with SingleTickerProvider
                       ),
                     ),
                     Text(
-                      '₹${product.potentialProfit.toStringAsFixed(2)}',
+                      'LKR ${product.potentialProfit.toStringAsFixed(2)}',
                       style: const TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
@@ -924,7 +923,7 @@ class _AnalyticsPageState extends State<AnalyticsPage> with SingleTickerProvider
             const SizedBox(height: 20),
             _buildSummaryCard(
               'Total Revenue',
-              '₹${_customReport!.totalRevenue.toStringAsFixed(0)}',
+              'LKR ${_customReport!.totalRevenue.toStringAsFixed(0)}',
               'From ${DateFormat('dd MMM').format(_customReport!.startDate)} to ${DateFormat('dd MMM').format(_customReport!.endDate)}',
               Icons.trending_up,
               const Color(0xFF4CAF50),
@@ -932,7 +931,7 @@ class _AnalyticsPageState extends State<AnalyticsPage> with SingleTickerProvider
             const SizedBox(height: 12),
             _buildSummaryCard(
               'Total Profit',
-              '₹${_customReport!.totalProfit.toStringAsFixed(0)}',
+              'LKR ${_customReport!.totalProfit.toStringAsFixed(0)}',
               '${_customReport!.profitMargin.toStringAsFixed(1)}% profit margin',
               Icons.account_balance_wallet,
               const Color(0xFF2196F3),

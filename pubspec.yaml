@@ -15,9 +15,9 @@ dependencies:
   crypto: ^3.0.3
   intl: ^0.18.1
   flutter_animate: ^4.5.0
-  # Firebase packages
-  firebase_core: ^2.24.2
-  firebase_auth: ^4.15.3
+  # Firebase packages - updated to latest stable versions
+  firebase_core: ^2.32.0
+  firebase_auth: ^4.20.0
   # Charts for analytics
   fl_chart: ^0.66.0
   # Shared preferences for local storage

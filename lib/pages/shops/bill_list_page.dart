@@ -271,7 +271,7 @@ class _BillListPageState extends State<BillListPage> with TickerProviderStateMix
                         ),
                       ),
                       Text(
-                        "₹${bill.totalAmount.toStringAsFixed(2)}",
+                        "LKR ${bill.totalAmount.toStringAsFixed(2)}",
                         style: const TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
@@ -338,8 +338,7 @@ class _BillListPageState extends State<BillListPage> with TickerProviderStateMix
             ],
           ),
         ),
-      ),
-    ).animate(delay: Duration(milliseconds: 100 * index))
+      ).animate(delay: Duration(milliseconds: 100 * index))
           .slideX(begin: 0.3, duration: 400.ms, curve: Curves.easeOutCubic)
           .fadeIn(duration: 400.ms);
   }
@@ -588,7 +587,7 @@ class _BillListPageState extends State<BillListPage> with TickerProviderStateMix
                       const Icon(Icons.attach_money, color: Colors.white, size: 28),
                       const SizedBox(height: 8),
                       Text(
-                        "₹${totalRevenue.toStringAsFixed(2)}",
+                        "LKR ${totalRevenue.toStringAsFixed(2)}",
                         style: const TextStyle(
                           fontSize: 24,
                           fontWeight: FontWeight.bold,

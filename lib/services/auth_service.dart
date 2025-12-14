@@ -5,7 +5,7 @@ import '../models/user.dart';
 import 'db_service.dart';
 
 class AuthService {
-  static late DbCollection userCollection;
+  static DbCollection? userCollection;
   static User? _currentUser;
 
   // Initialize auth service (call this after DB connection)
@@ -25,7 +25,12 @@ class AuthService {
   // Create default admin user if no users exist
   static Future<void> createDefaultUser() async {
     try {
-      final userCount = await userCollection.count();
+      if (userCollection == null) {
+        print('⚠️ Cannot create default user: Database not connected');
+        return;
+      }
+
+      final userCount = await userCollection!.count();
       if (userCount == 0) {
         final defaultUser = User(
           email: 'admin@dairydesk.com',
@@ -40,7 +45,7 @@ class AuthService {
         userMap['passwordHash'] = _hashPassword('admin123'); // Default password
         userMap['isDefaultUser'] = true;
 
-        await userCollection.insertOne(userMap);
+        await userCollection!.insertOne(userMap);
         print('✅ Default admin user created: admin@dairydesk.com / admin123');
       }
     } catch (e) {
@@ -57,8 +62,12 @@ class AuthService {
     String role = 'owner',
   }) async {
     try {
+      if (userCollection == null) {
+        throw Exception('Database not connected. Cannot register user.');
+      }
+
       // Check if user already exists
-      final existingUser = await userCollection.findOne(where.eq('email', email.toLowerCase()));
+      final existingUser = await userCollection!.findOne(where.eq('email', email.toLowerCase()));
       if (existingUser != null) {
         throw Exception('User with this email already exists');
       }
@@ -76,7 +85,7 @@ class AuthService {
       final userMap = user.toMap();
       userMap['passwordHash'] = _hashPassword(password);
 
-      final result = await userCollection.insertOne(userMap);
+      final result = await userCollection!.insertOne(userMap);
       return user.copyWith(id: result.id.toString());
     } catch (e) {
       throw Exception('Failed to register user: $e');
@@ -89,7 +98,11 @@ class AuthService {
     required String password,
   }) async {
     try {
-      final userDoc = await userCollection.findOne(where.eq('email', email.toLowerCase()));
+      if (userCollection == null) {
+        throw Exception('Database not connected. Cannot login.');
+      }
+
+      final userDoc = await userCollection!.findOne(where.eq('email', email.toLowerCase()));
 
       if (userDoc == null) {
         throw Exception('User not found');
@@ -107,7 +120,7 @@ class AuthService {
       }
 
       // Update last login
-      await userCollection.updateOne(
+      await userCollection!.updateOne(
         where.id(userDoc['_id']),
         modify.set('lastLogin', DateTime.now().toIso8601String()),
       );
@@ -144,6 +157,10 @@ class AuthService {
     Map<String, dynamic>? preferences,
   }) async {
     try {
+      if (userCollection == null) {
+        throw Exception('Database not connected');
+      }
+
       final updateMap = <String, dynamic>{};
       if (name != null) updateMap['name'] = name;
       if (phone != null) updateMap['phone'] = phone;
@@ -153,7 +170,7 @@ class AuthService {
         throw Exception('No fields to update');
       }
 
-      await userCollection.updateOne(
+      await userCollection!.updateOne(
         where.id(ObjectId.parse(userId)),
         modify.set('name', name)
             .set('phone', phone)
@@ -161,7 +178,7 @@ class AuthService {
       );
 
       // Get updated user
-      final userDoc = await userCollection.findOne(where.id(ObjectId.parse(userId)));
+      final userDoc = await userCollection!.findOne(where.id(ObjectId.parse(userId)));
       if (userDoc == null) {
         throw Exception('User not found after update');
       }
@@ -184,7 +201,11 @@ class AuthService {
     required String newPassword,
   }) async {
     try {
-      final userDoc = await userCollection.findOne(where.id(ObjectId.parse(userId)));
+      if (userCollection == null) {
+        throw Exception('Database not connected');
+      }
+
+      final userDoc = await userCollection!.findOne(where.id(ObjectId.parse(userId)));
       if (userDoc == null) {
         throw Exception('User not found');
       }
@@ -198,7 +219,7 @@ class AuthService {
         throw Exception('New password must be at least 6 characters long');
       }
 
-      await userCollection.updateOne(
+      await userCollection!.updateOne(
         where.id(ObjectId.parse(userId)),
         modify.set('passwordHash', _hashPassword(newPassword)),
       );
@@ -213,12 +234,16 @@ class AuthService {
     required String newPassword,
   }) async {
     try {
-      final userDoc = await userCollection.findOne(where.eq('email', userEmail.toLowerCase()));
+      if (userCollection == null) {
+        throw Exception('Database not connected');
+      }
+
+      final userDoc = await userCollection!.findOne(where.eq('email', userEmail.toLowerCase()));
       if (userDoc == null) {
         throw Exception('User not found');
       }
 
-      await userCollection.updateOne(
+      await userCollection!.updateOne(
         where.id(userDoc['_id']),
         modify.set('passwordHash', _hashPassword(newPassword)),
       );
@@ -230,7 +255,11 @@ class AuthService {
   // Get all users (admin function)
   static Future<List<User>> getAllUsers() async {
     try {
-      final users = await userCollection.find().toList();
+      if (userCollection == null) {
+        throw Exception('Database not connected');
+      }
+
+      final users = await userCollection!.find().toList();
       return users.map((userDoc) => User.fromMap(userDoc)).toList();
     } catch (e) {
       throw Exception('Failed to fetch users: $e');
@@ -240,7 +269,11 @@ class AuthService {
   // Deactivate user
   static Future<void> deactivateUser(String userId) async {
     try {
-      await userCollection.updateOne(
+      if (userCollection == null) {
+        throw Exception('Database not connected');
+      }
+
+      await userCollection!.updateOne(
         where.id(ObjectId.parse(userId)),
         modify.set('isActive', false),
       );
@@ -252,7 +285,11 @@ class AuthService {
   // Activate user
   static Future<void> activateUser(String userId) async {
     try {
-      await userCollection.updateOne(
+      if (userCollection == null) {
+        throw Exception('Database not connected');
+      }
+
+      await userCollection!.updateOne(
         where.id(ObjectId.parse(userId)),
         modify.set('isActive', true),
       );

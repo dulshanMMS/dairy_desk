@@ -321,7 +321,7 @@ class _BillFormPageState extends State<BillFormPage> {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    '${item.quantity} × ₹${item.unitPrice.toStringAsFixed(2)}',
+                    '${item.quantity} × LKR ${item.unitPrice.toStringAsFixed(2)}',
                     style: TextStyle(
                       fontSize: 14,
                       color: Colors.grey[600],
@@ -334,7 +334,7 @@ class _BillFormPageState extends State<BillFormPage> {
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
                 Text(
-                  '₹${item.totalPrice.toStringAsFixed(2)}',
+                  'LKR ${item.totalPrice.toStringAsFixed(2)}',
                   style: const TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
@@ -368,13 +368,13 @@ class _BillFormPageState extends State<BillFormPage> {
               ),
             ),
             const SizedBox(height: 12),
-            _buildSummaryRow('Subtotal', '₹${_subtotal.toStringAsFixed(2)}'),
-            _buildSummaryRow('Tax (${(AppConstants.defaultTaxRate * 100).toInt()}%)', '₹${_tax.toStringAsFixed(2)}'),
-            _buildSummaryRow('Discount', '₹${_discount.toStringAsFixed(2)}'),
+            _buildSummaryRow('Subtotal', 'LKR ${_subtotal.toStringAsFixed(2)}'),
+            _buildSummaryRow('Tax (${(AppConstants.defaultTaxRate * 100).toInt()}%)', 'LKR ${_tax.toStringAsFixed(2)}'),
+            _buildSummaryRow('Discount', 'LKR ${_discount.toStringAsFixed(2)}'),
             const Divider(),
             _buildSummaryRow(
               'Total Amount',
-              '₹${_totalAmount.toStringAsFixed(2)}',
+              'LKR ${_totalAmount.toStringAsFixed(2)}',
               isTotal: true,
             ),
           ],
@@ -708,7 +708,7 @@ class _ProductSelectionModalState extends State<_ProductSelectionModal> {
                 children: [
                   Text(product.name),
                   Text(
-                    '₹${product.sellPrice.toStringAsFixed(2)} • Stock: ${product.availableStock}',
+                    'LKR ${product.sellPrice.toStringAsFixed(2)} • Stock: ${product.availableStock}',
                     style: TextStyle(
                       fontSize: 12,
                       color: Colors.grey[600],
@@ -776,3 +776,4 @@ class _ProductSelectionModalState extends State<_ProductSelectionModal> {
     );
   }
 }
+

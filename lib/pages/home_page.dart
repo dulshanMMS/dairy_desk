@@ -4,6 +4,7 @@ import 'dairy/dairy_list_page.dart';
 import 'farm/farm_list_page.dart';
 import 'shops/shop_list_page.dart';
 import 'analytics_page.dart';
+import 'product_master_page.dart';
 import '../services/firebase_auth_service.dart';
 import 'auth/login_page.dart';
 
@@ -50,6 +51,14 @@ class _HomePageState extends State<HomePage> {
       'color': const Color(0xFFFF9800),
       'gradient': [const Color(0xFFFF9800), const Color(0xFFFFB74D)],
       'page': const ShopListPage(),
+    },
+    {
+      'title': 'Product Master',
+      'subtitle': 'Manage product catalog & pricing',
+      'icon': Icons.inventory_2,
+      'color': const Color(0xFF2196F3),
+      'gradient': [const Color(0xFF2196F3), const Color(0xFF64B5F6)],
+      'page': const ProductMasterPage(),
     },
   ];
 

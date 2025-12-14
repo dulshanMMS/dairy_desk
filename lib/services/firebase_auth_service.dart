@@ -47,17 +47,19 @@ class FirebaseAuthService {
         lastLogin: DateTime.now(),
       );
 
-      // Save to MongoDB
-      await DBService.userCollection.insertOne({
-        '_id': userCredential.user!.uid,
-        'email': appUser.email,
-        'name': appUser.name,
-        'phone': appUser.phone,
-        'role': appUser.role,
-        'isActive': true,
-        'createdDate': appUser.createdDate.toIso8601String(),
-        'lastLogin': appUser.lastLogin.toIso8601String(),
-      });
+      // Save to MongoDB if connected
+      if (DBService.userCollection != null) {
+        await DBService.userCollection!.insertOne({
+          '_id': userCredential.user!.uid,
+          'email': appUser.email,
+          'name': appUser.name,
+          'phone': appUser.phone,
+          'role': appUser.role,
+          'isActive': true,
+          'createdDate': appUser.createdDate.toIso8601String(),
+          'lastLogin': appUser.lastLogin.toIso8601String(),
+        });
+      }
 
       _currentAppUser = appUser;
       return appUser;
@@ -82,13 +84,15 @@ class FirebaseAuthService {
       // Load or create user data in MongoDB
       await _loadUserData(userCredential.user!.uid);
 
-      // Update last login
-      await DBService.userCollection.updateOne(
-        {'_id': userCredential.user!.uid},
-        {
-          '\$set': {'lastLogin': DateTime.now().toIso8601String()}
-        },
-      );
+      // Update last login if DB is connected
+      if (DBService.userCollection != null) {
+        await DBService.userCollection!.updateOne(
+          {'_id': userCredential.user!.uid},
+          {
+            '\$set': {'lastLogin': DateTime.now().toIso8601String()}
+          },
+        );
+      }
 
       return _currentAppUser!;
     } on FirebaseAuthException catch (e) {
@@ -137,16 +141,18 @@ class FirebaseAuthService {
         await user.updateDisplayName(name);
       }
 
-      // Update MongoDB user data
-      final updateMap = <String, dynamic>{};
-      if (name != null) updateMap['name'] = name;
-      if (phone != null) updateMap['phone'] = phone;
+      // Update MongoDB user data if connected
+      if (DBService.userCollection != null) {
+        final updateMap = <String, dynamic>{};
+        if (name != null) updateMap['name'] = name;
+        if (phone != null) updateMap['phone'] = phone;
 
-      if (updateMap.isNotEmpty) {
-        await DBService.userCollection.updateOne(
-          {'_id': user.uid},
-          {'\$set': updateMap},
-        );
+        if (updateMap.isNotEmpty) {
+          await DBService.userCollection!.updateOne(
+            {'_id': user.uid},
+            {'\$set': updateMap},
+          );
+        }
       }
 
       // Reload user data
@@ -185,7 +191,22 @@ class FirebaseAuthService {
   // Load user data from MongoDB
   static Future<void> _loadUserData(String uid) async {
     try {
-      final result = await DBService.userCollection.findOne(where.eq('_id', uid));
+      if (DBService.userCollection == null) {
+        // Create user from Firebase data only
+        final firebaseUser = _auth.currentUser!;
+        _currentAppUser = app_user.User(
+          id: uid,
+          email: firebaseUser.email ?? '',
+          name: firebaseUser.displayName ?? 'User',
+          phone: firebaseUser.phoneNumber ?? '',
+          role: 'owner',
+          createdDate: DateTime.now(),
+          lastLogin: DateTime.now(),
+        );
+        return;
+      }
+
+      final result = await DBService.userCollection!.findOne(where.eq('_id', uid));
 
       if (result == null) {
         // Create new user record if doesn't exist
@@ -200,7 +221,7 @@ class FirebaseAuthService {
           lastLogin: DateTime.now(),
         );
 
-        await DBService.userCollection.insertOne({
+        await DBService.userCollection!.insertOne({
           '_id': uid,
           'email': _currentAppUser!.email,
           'name': _currentAppUser!.name,
@@ -258,8 +279,10 @@ class FirebaseAuthService {
       );
       await user.reauthenticateWithCredential(credential);
 
-      // Delete from MongoDB
-      await DBService.userCollection.deleteOne({'_id': user.uid});
+      // Delete from MongoDB if connected
+      if (DBService.userCollection != null) {
+        await DBService.userCollection!.deleteOne({'_id': user.uid});
+      }
 
       // Delete Firebase account
       await user.delete();
